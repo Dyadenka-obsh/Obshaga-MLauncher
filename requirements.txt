@@ -1,0 +1,4 @@
+minecraft-launcher-lib>=6.5
+elyby-api>=0.1.0.dev0
+pyinstaller>=6.0
+pillow
