@@ -1,0 +1,17 @@
+{
+    "colors": {
+        "bg_dark": "#68451b",
+        "panel_bg": "#714a1e",
+        "fg_text": "#f0e6d2",
+        "fg_accent": "#d4af37",
+        "scanline_clr": "#2a1a08",
+        "border_clr": "#5a3a15"
+    },
+    "fonts": {
+        "mono": ["Consolas", 12],
+        "mono_sm": ["Consolas", 10],
+        "title": ["Consolas", 18, "bold"],
+        "huge": ["Consolas", 36, "bold"]
+    },
+    "logo_file": "logo_1973.png"
+}

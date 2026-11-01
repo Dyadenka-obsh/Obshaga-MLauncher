@@ -7,6 +7,7 @@
 import subprocess
 import threading
 import re
+import sys
 from typing import Callable
 
 import minecraft_launcher_lib
@@ -32,6 +33,18 @@ def ensure_game_installed(minecraft_dir: str, java_path: str, log: Callable[[str
     Убеждается, что ванильная версия и NeoForge установлены.
     Возвращает ID установленной версии.
     """
+    # 1. Сначала проверяем, есть ли уже установленный NeoForge локально (фикс блокировок maven)
+    installed_versions = minecraft_launcher_lib.utils.get_installed_versions(minecraft_dir)
+    neoforge_versions = [
+        v["id"] for v in installed_versions if v["id"].startswith("neoforge-")
+    ]
+    
+    if neoforge_versions:
+        version_id = sorted(neoforge_versions)[-1]
+        log(f"[GAME] NeoForge уже установлен локально: {version_id}")
+        return version_id
+
+    # 2. Если не установлен, качаем
     log(f"[GAME] Проверка установки {MINECRAFT_VERSION}...")
     minecraft_launcher_lib.install.install_minecraft_version(
         MINECRAFT_VERSION, minecraft_dir
@@ -40,11 +53,11 @@ def ensure_game_installed(minecraft_dir: str, java_path: str, log: Callable[[str
     log(f"[GAME] Проверка модлоадера {NEOFORGE_LOADER}...")
     loader = minecraft_launcher_lib.mod_loader.get_mod_loader(NEOFORGE_LOADER)
     
-    # Метод install сам возвращает точный ID версии (например, 'neoforge-21.1.xxx')
     version_id = loader.install(MINECRAFT_VERSION, minecraft_dir, java=java_path)
     
     log(f"[GAME] Версия готова: {version_id}")
     return version_id
+
 
 def launch_game(
     version_id: str,
@@ -52,27 +65,38 @@ def launch_game(
     java_path: str,
     username: str,
     uuid: str,
+    skin_url: str = "",  # <--- Добавили параметр для скина
     log: Callable[[str], None] = print,
 ) -> subprocess.Popen:
     """
     Формирует и запускает команду Minecraft с прямым подключением к серверу.
     """
+    # Если передан URL скина, добавляем системное свойство для CustomSkinLoader
+    extra_jvm_args = []
+    if skin_url:
+        extra_jvm_args.append(f"-Delyby.skinUrl={skin_url}")
+
     options = {
         "username": username,
         "uuid": uuid,
         "token": "",                
         "executablePath": java_path,
-        "jvmArguments": JVM_ARGS,
+        "jvmArguments": JVM_ARGS + extra_jvm_args, # <--- Передаем аргументы
     }
 
     log("[GAME] Формирование команды запуска...")
     cmd = minecraft_launcher_lib.command.get_minecraft_command(
         version_id, minecraft_dir, options
     )
+    
+    # Вручную добавляем аргументы для прямого подключения к серверу
     cmd.extend(["--server", SERVER_HOST, "--port", SERVER_PORT])
 
     log("[GAME] Запуск Minecraft (логи транслируются)...")
     
+    # Скрываем консоль Windows
+    creation_flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+
     # Запускаем с перехватом вывода
     process = subprocess.Popen(
         cmd, 
@@ -82,7 +106,8 @@ def launch_game(
         text=True,
         encoding='utf-8',
         errors='replace',
-        bufsize=1  # Построчная буферизация
+        bufsize=1,  # Построчная буферизация
+        creationflags=creation_flags  # <--- ЭТО ПРЯЧЕТ CMD
     )
 
     # Функция для чтения логов в фоне

@@ -1,0 +1,14 @@
+{
+    "header_project": "PROJECT: OBSHAGA",
+    "nickname": "Nickname:",
+    "auth_type": "Pirate / ely.by",
+    "auth_ely": "Aperture Science worker (ely.by)",
+    "auth_pirate": "No Data (pirate)",
+    "play": "PLAY",
+    "loading": "LOADING...",
+    "tab_pack": "PACK",
+    "tab_launcher": "LAUNCHER",
+    "news_loading": "Loading...",
+    "news_error": "No internet\nconnection\n(joke...or\nnot?)",
+    "lang_btn": "LANG: EN"
+}

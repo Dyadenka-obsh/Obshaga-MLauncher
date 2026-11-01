@@ -1,0 +1,14 @@
+{
+    "header_project": "ПРОЕКТ: OBSHAGA",
+    "nickname": "Никнейм:",
+    "auth_type": "Пиратский / ely.by",
+    "auth_ely": "Aperture Science worker (ely.by)",
+    "auth_pirate": "No Data (пиратский)",
+    "play": "ИГРАТЬ",
+    "loading": "ЗАГРУЗКА...",
+    "tab_pack": "СБОРКА",
+    "tab_launcher": "ЛАУНЧЕР",
+    "news_loading": "Загрузка...",
+    "news_error": "Нет подключения\nк интернету\n(шутка...или\nнет?)",
+    "lang_btn": "ЯЗЫК: RU"
+}

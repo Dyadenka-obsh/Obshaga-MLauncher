@@ -23,4 +23,6 @@ ELYBY_SKINSYSTEM_BASE = "https://skinsystem.ely.by"
 
 # ---- Пути ----
 APP_DIR = "ApertureLauncher"              # подпапка в %APPDATA% / ~/.local/share
-CHANGELOG_URL = 'https://raw.githubusercontent.com/Dyadenka-obsh/Obshaga-MServer/refs/heads/main/changelog.txt'
+# Ссылки на чейнджлоги (не забудь проверить правильность путей и ветки!)
+PACK_CHANGELOG_URL = "https://raw.githubusercontent.com/Dyadenka-obsh/Obshaga-MServer/main/changelog.txt"
+LAUNCHER_CHANGELOG_URL = "https://raw.githubusercontent.com/Dyadenka-obsh/Obshaga-MLauncher/refs/heads/main/changelog.txt"
