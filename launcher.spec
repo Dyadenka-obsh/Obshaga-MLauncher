@@ -5,9 +5,14 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    # Указываем, какие файлы упаковать внутрь программы
+    # Упаковываем все ресурсы: картинки, тему и файлы переводов
     datas=[
-        ('logo_1973.png', '.'),  # Логотип для интерфейса
+        ('logo_1973.png', '.'),
+        ('logo.png', '.'),
+        ('theme.json', '.'),
+        ('lang/ru.json', 'lang'),
+        ('lang/en.json', 'lang'),
+        ('lang/uk.json', 'lang'),
     ],
     hiddenimports=[],
     hookspath=[],
@@ -29,13 +34,13 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,  # Отключаем черную консоль
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='icon.ico'  # <--- Иконка для самого файла .exe (должна лежать в корне)
+    icon='icon.ico'
 )
 
 coll = COLLECT(

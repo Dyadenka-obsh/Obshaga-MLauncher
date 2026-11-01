@@ -1,0 +1,11 @@
+VERSION 1.1 - THE APERTURE UPDATE
+1. Added multi-language support: English, Russian, Ukrainian (switchable in UI).
+2. Implemented separate changelog tabs for Modpack and Launcher updates.
+3. Added external theme engine (theme.json) for custom colors, fonts, and logos.
+4. Added hover effects for UI buttons.
+5. Improved ely.by authentication with automatic fallback to offline/pirate mode.
+6. Added automatic skin loading support via CustomSkinLoader and JVM arguments.
+7. Hidden the Windows CMD console window when launching Minecraft.
+8. Added offline-mode check for NeoForge installation (bypasses Maven blocks).
+9. Added auto-saving for nickname, language, and auth mode.
+10. Minor UI/UX improvements and bug fixes.
