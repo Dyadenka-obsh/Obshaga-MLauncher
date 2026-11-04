@@ -1,3 +1,10 @@
+VERSION 1.1.1 - OFFLINE FIX
+1. Fixed a critical crash in Pirate (offline) mode caused by an invalid empty UUID.
+2. Implemented proper offline UUID generation (matching vanilla Minecraft behavior).
+3. Updated the .gitignore to keep the repository clean (removed build artifacts, caches, and local settings).
+4. Improved stability for players using integrated graphics and legacy drivers.
+5. Minor localization and UI text fixes.
+
 VERSION 1.1 - THE APERTURE UPDATE
 1. Added multi-language support: English, Russian, Ukrainian (switchable in UI).
 2. Implemented separate changelog tabs for Modpack and Launcher updates.

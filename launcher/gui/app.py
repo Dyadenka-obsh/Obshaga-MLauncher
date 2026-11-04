@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import messagebox
 import urllib.request
 import sys
+import uuid  # <--- Добавлен импорт для генерации UUID
 from pathlib import Path
 
 from launcher.config import APP_DIR, PACK_CHANGELOG_URL, LAUNCHER_CHANGELOG_URL
@@ -107,7 +108,6 @@ class LauncherApp:
         news_frame = tk.Frame(sidebar, bg=theme.PANEL_BG, bd=1, relief="solid")
         news_frame.pack(fill="both", expand=True)
         
-        # Вкладки (Кнопки)
         tab_frame = tk.Frame(news_frame, bg=theme.PANEL_BG)
         tab_frame.pack(fill="x", padx=10, pady=(10, 0))
 
@@ -123,7 +123,6 @@ class LauncherApp:
         )
         self.btn_tab_launcher.pack(side="left")
 
-        # Текст
         text_container = tk.Frame(news_frame, bg=theme.PANEL_BG)
         text_container.pack(fill="both", expand=True, padx=10, pady=(5, 10))
 
@@ -137,7 +136,6 @@ class LauncherApp:
         scrollbar.pack(side="right", fill="y")
         self.news_text.configure(yscrollcommand=scrollbar.set)
         
-        # Запускаем загрузку чейнджлогов
         self.news_text.configure(state="normal")
         self.news_text.insert("end", self.trans.get("news_loading", "Loading..."))
         self.news_text.configure(state="disabled")
@@ -198,7 +196,7 @@ class LauncherApp:
         if self.play_btn['state'] == 'normal':
             self.play_btn.configure(text=t.get("play", "PLAY"))
             
-        self._update_news_display() # Обновляем текст при смене языка (пасхалки)
+        self._update_news_display()
 
     def _switch_tab(self, tab_name: str) -> None:
         self.current_tab = tab_name
@@ -210,12 +208,12 @@ class LauncherApp:
         
         if self.current_tab == "pack":
             text = self.pack_changelog or error_msg
-            self.btn_tab_pack.configure(bg=theme.FG_ACCENT, fg=theme.BG_DARK) # Активная
-            self.btn_tab_launcher.configure(bg=theme.BG_DARK, fg=theme.FG_TEXT) # Неактивная
+            self.btn_tab_pack.configure(bg=theme.FG_ACCENT, fg=theme.BG_DARK)
+            self.btn_tab_launcher.configure(bg=theme.BG_DARK, fg=theme.FG_TEXT)
         else:
             text = self.launcher_changelog or error_msg
-            self.btn_tab_pack.configure(bg=theme.BG_DARK, fg=theme.FG_TEXT) # Неактивная
-            self.btn_tab_launcher.configure(bg=theme.FG_ACCENT, fg=theme.BG_DARK) # Активная
+            self.btn_tab_pack.configure(bg=theme.BG_DARK, fg=theme.FG_TEXT)
+            self.btn_tab_launcher.configure(bg=theme.FG_ACCENT, fg=theme.BG_DARK)
 
         def _update():
             try:
@@ -235,7 +233,6 @@ class LauncherApp:
     def _load_changelogs(self) -> None:
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ApertureLauncher/1.0'}
         
-        # Загружаем Pack Changelog
         try:
             req = urllib.request.Request(PACK_CHANGELOG_URL, headers=headers)
             with urllib.request.urlopen(req, timeout=5) as response:
@@ -245,7 +242,6 @@ class LauncherApp:
         except Exception as e:
             print(f"[PACK CHANGELOG ERROR] {e}")
 
-        # Загружаем Launcher Changelog
         try:
             req = urllib.request.Request(LAUNCHER_CHANGELOG_URL, headers=headers)
             with urllib.request.urlopen(req, timeout=5) as response:
@@ -255,7 +251,6 @@ class LauncherApp:
         except Exception as e:
             print(f"[LAUNCHER CHANGELOG ERROR] {e}")
 
-        # Обновляем UI (вызываем метод, который безопасно обновит интерфейс)
         try:
             if self.root.winfo_exists():
                 self.root.after(0, self._update_news_display)
@@ -351,7 +346,9 @@ class LauncherApp:
 
             if self.is_pirate:
                 self.log(f"[AUTH] Режим: Пиратский. Ник: {nickname}")
-                profile = {"nickname": nickname, "uuid": "", "skin_url": ""}
+                # Генерируем правильный оффлайн UUID для пиратского режима
+                offline_uuid = str(uuid.uuid3(uuid.NAMESPACE_DNS, f"OfflinePlayer:{nickname}")).replace("-", "")
+                profile = {"nickname": nickname, "uuid": offline_uuid, "skin_url": ""}
             else:
                 self.log(f"[ELY] Запрос профиля {nickname!r}...")
                 try:
@@ -380,7 +377,9 @@ class LauncherApp:
                         self.settings["is_pirate"] = True
                         save_settings(self.settings)
                         self.log("[AUTH] Переключено на пиратский режим.")
-                        profile = {"nickname": nickname, "uuid": "", "skin_url": ""}
+                        # Генерируем правильный оффлайн UUID при фолбэке
+                        offline_uuid = str(uuid.uuid3(uuid.NAMESPACE_DNS, f"OfflinePlayer:{nickname}")).replace("-", "")
+                        profile = {"nickname": nickname, "uuid": offline_uuid, "skin_url": ""}
                     else:
                         cancel_msg = {
                             "ru": "Запуск отменен.",

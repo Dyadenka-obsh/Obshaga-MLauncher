@@ -1,15 +1,24 @@
 # Байткод Python
 __pycache__/
 *.py[cod]
+*$py.class
 
 # Временные файлы PyInstaller
 build/
 dist/
 *.spec.bak
 
-# Локальные настройки (у каждого игрока свои)
+# Локальные настройки игрока
 settings.json
+crash-reports/
 
-# Виртуальные окружения (если будешь использовать)
+# Виртуальные окружения (если используются)
 venv/
 .venv/
+env/
+
+# Файлы IDE и ОС
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
