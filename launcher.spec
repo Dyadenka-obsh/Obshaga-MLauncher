@@ -5,10 +5,12 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    # Упаковываем только те файлы, которые реально существуют
+    # Упаковываем все ресурсы
     datas=[
         ('logo_1973.png', '.'),
+        ('logo.png', '.'),
         ('theme.json', '.'),
+        ('theme_default.json', '.'),   # <--- Добавили сброс темы
         ('lang/ru.json', 'lang'),
         ('lang/en.json', 'lang'),
         ('lang/uk.json', 'lang'),
