@@ -26,3 +26,10 @@ APP_DIR = "ApertureLauncher"              # подпапка в %APPDATA% / ~/.l
 # Ссылки на чейнджлоги (не забудь проверить правильность путей и ветки!)
 PACK_CHANGELOG_URL = "https://raw.githubusercontent.com/Dyadenka-obsh/Obshaga-MServer/main/changelog.txt"
 LAUNCHER_CHANGELOG_URL = "https://raw.githubusercontent.com/Dyadenka-obsh/Obshaga-MLauncher/refs/heads/main/changelog.txt"
+#Автообновление
+CURRENT_VERSION = "1.2.0-beta"
+GITHUB_REPO = "Dyadenka-obsh/Obshaga-MLauncher" 
+
+# Discord
+DISCORD_CLIENT_ID = "1567493610700800061"
+DISCORD_INVITE_URL = "https://discord.gg/obshagaf" # <--- Ссылка на твой сервер

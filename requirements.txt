@@ -1,4 +1,6 @@
 minecraft-launcher-lib>=6.5
 elyby-api>=0.1.0.dev0
 pyinstaller>=6.0
-pillow
+pillow>=10.0
+pysence>=4.3.1
+psutil
