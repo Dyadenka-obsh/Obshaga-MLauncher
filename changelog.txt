@@ -1,3 +1,13 @@
+VERSION 1.2 - THE SOCIAL UPDATE
+1. Added Discord Rich Presence integration (shows game status and server).
+2. Added a Discord invite link button in the settings.
+3. Added a custom RAM allocation slider with a safety limit (prevents system crashes).
+4. Added "Open Mods Folder" button for quick access.
+5. Added "Repair Build" button to forcefully redownload broken mods.
+6. Added automatic update checker (notifies if a new version is available).
+7. Added "Reset Theme to Default" button in case you mess up theme.json.
+8. General UI polish and localization fixes.
+
 VERSION 1.1.1 - OFFLINE FIX
 1. Fixed a critical crash in Pirate (offline) mode caused by an invalid empty UUID.
 2. Implemented proper offline UUID generation (matching vanilla Minecraft behavior).
