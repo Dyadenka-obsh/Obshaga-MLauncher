@@ -11,7 +11,7 @@ import shutil
 from pathlib import Path
 import psutil
 
-from launcher.config import APP_DIR, PACK_CHANGELOG_URL, LAUNCHER_CHANGELOG_URL, DISCORD_INVITE_URL
+from launcher.config import APP_DIR, PACK_CHANGELOG_URL, LAUNCHER_CHANGELOG_URL, DISCORD_INVITE_URL, CURRENT_VERSION
 from launcher.settings import load_settings, save_settings
 from launcher.localization import load_lang
 from launcher.java_manager import ensure_jvm
@@ -178,15 +178,16 @@ class LauncherApp:
 
     # ------------------------------------------------------------- Окно настроек
     def _open_settings(self):
+        t = self.trans
         win = tk.Toplevel(self.root)
-        win.title("Settings")
-        win.geometry("450x450")
+        win.title(t.get("settings_title", "Settings"))
+        win.geometry("450x480")
         win.configure(bg=theme.BG_DARK)
         win.resizable(False, False)
         win.grab_set()
 
         # Выделение ОЗУ
-        tk.Label(win, text="RAM Allocation (MB):", bg=theme.BG_DARK, fg=theme.FG_TEXT, font=theme.FONT_MONO).pack(pady=(15, 5))
+        tk.Label(win, text=t.get("ram_alloc", "RAM Allocation (MB):"), bg=theme.BG_DARK, fg=theme.FG_TEXT, font=theme.FONT_MONO).pack(pady=(15, 5))
         
         total_ram_mb = int(psutil.virtual_memory().total / (1024 * 1024))
         safe_max_ram = total_ram_mb - 2048
@@ -205,7 +206,7 @@ class LauncherApp:
         ram_slider.set(current_ram)
         ram_slider.pack()
 
-        tk.Label(win, text=f"(Max safe: {max_allowed} MB)", bg=theme.BG_DARK, fg="#b89e79", font=theme.FONT_MONO_SM).pack()
+        tk.Label(win, text=t.get("max_safe_ram", "(Max safe: {max} MB)").format(max=max_allowed), bg=theme.BG_DARK, fg="#b89e79", font=theme.FONT_MONO_SM).pack()
 
         # Кнопки
         btn_frame = tk.Frame(win, bg=theme.BG_DARK)
@@ -217,19 +218,20 @@ class LauncherApp:
             win.destroy()
 
         # --- ТЕМА (СБРОС) ---
-        tk.Button(btn_frame, text="Reset Theme to Default", command=self._reset_theme, bg=theme.FG_ACCENT, fg=theme.BG_DARK, relief="flat", font=theme.FONT_MONO).pack(fill="x", pady=5)
-        tk.Label(btn_frame, text="(Applies after restart)", bg=theme.BG_DARK, fg="#b89e79", font=theme.FONT_MONO_SM).pack(pady=(0, 10))
+        tk.Button(btn_frame, text=t.get("reset_theme", "Reset Theme to Default"), command=self._reset_theme, bg=theme.FG_ACCENT, fg=theme.BG_DARK, relief="flat", font=theme.FONT_MONO).pack(fill="x", pady=5)
+        tk.Label(btn_frame, text=t.get("applies_restart", "(Applies after restart)"), bg=theme.BG_DARK, fg="#b89e79", font=theme.FONT_MONO_SM).pack(pady=(0, 10))
 
-        tk.Button(btn_frame, text="Open Mods Folder", command=lambda: os.startfile(Path(self.minecraft_dir) / "mods"), bg=theme.PANEL_BG, fg=theme.FG_TEXT, relief="flat", font=theme.FONT_MONO).pack(fill="x", pady=5)
+        tk.Button(btn_frame, text=t.get("open_mods", "Open Mods Folder"), command=lambda: os.startfile(Path(self.minecraft_dir) / "mods"), bg=theme.PANEL_BG, fg=theme.FG_TEXT, relief="flat", font=theme.FONT_MONO).pack(fill="x", pady=5)
         
-        tk.Button(btn_frame, text="Repair Build (Force Update)", command=self._repair_build, bg="#8b0000", fg="white", relief="flat", font=theme.FONT_MONO).pack(fill="x", pady=5)
+        tk.Button(btn_frame, text=t.get("repair_build", "Repair Build (Force Update)"), command=self._repair_build, bg="#8b0000", fg="white", relief="flat", font=theme.FONT_MONO).pack(fill="x", pady=5)
 
-        tk.Button(btn_frame, text="Join Discord Server", command=lambda: webbrowser.open(DISCORD_INVITE_URL), bg="#5865F2", fg="white", relief="flat", font=theme.FONT_MONO).pack(fill="x", pady=5)
+        tk.Button(btn_frame, text=t.get("join_discord", "Join Discord Server"), command=lambda: webbrowser.open(DISCORD_INVITE_URL), bg="#5865F2", fg="white", relief="flat", font=theme.FONT_MONO).pack(fill="x", pady=5)
 
-        tk.Button(win, text="Save & Close", command=save_and_close, bg=theme.FG_ACCENT, fg=theme.BG_DARK, relief="flat", font=theme.FONT_MONO).pack(side="bottom", pady=15)
+        tk.Button(win, text=t.get("save_close", "Save & Close"), command=save_and_close, bg=theme.FG_ACCENT, fg=theme.BG_DARK, relief="flat", font=theme.FONT_MONO).pack(side="bottom", pady=15)
 
     def _reset_theme(self):
         """Сбрасывает theme.json к заводским настройкам."""
+        t = self.trans
         if getattr(sys, 'frozen', False):
             base_dir = Path(sys._MEIPASS)
         else:
@@ -238,36 +240,39 @@ class LauncherApp:
         default_theme = base_dir / "theme_default.json"
         current_theme = base_dir / "theme.json"
 
-        # Если мы в exe, то theme.json лежит рядом с exe, а не в _MEIPASS
         if getattr(sys, 'frozen', False):
             current_theme = Path(sys.executable).parent / "_internal" / "theme.json"
 
         try:
             if default_theme.exists():
                 shutil.copyfile(default_theme, current_theme)
-                messagebox.showinfo("Theme", "Theme reset to default! Please restart the launcher.")
+                messagebox.showinfo(t.get("settings_title", "Settings"), t.get("msg_theme_reset", "Theme reset to default! Please restart the launcher."))
             else:
-                messagebox.showerror("Theme Error", "theme_default.json not found!")
+                messagebox.showerror(t.get("msg_theme_error", "Theme Error"), "theme_default.json not found!")
         except Exception as e:
-            messagebox.showerror("Theme Error", f"Failed to reset theme:\n{e}")
+            messagebox.showerror(t.get("msg_theme_error", "Theme Error"), f"Failed to reset theme:\n{e}")
 
     def _repair_build(self):
+        t = self.trans
         mods_dir = Path(self.minecraft_dir) / "mods"
         if mods_dir.exists():
             shutil.rmtree(mods_dir)
-        messagebox.showinfo("Repair", "Mods folder cleared. Please restart the game to redownload.")
+        messagebox.showinfo(t.get("settings_title", "Settings"), t.get("msg_repair_info", "Mods folder cleared. Please restart the game to redownload."))
         self.settings["force_update"] = True
         save_settings(self.settings)
 
     # ------------------------------------------------------------- Логика
     def _check_updates_async(self):
-        has_update, url = check_for_updates()
+        has_update, url, new_version = check_for_updates()
         if has_update and url:
             def _show_update_dialog():
-                res = messagebox.askyesno(
-                    "Update Available", 
-                    "A new version of Aperture Launcher is available!\nDo you want to download it?"
+                msg = (
+                    f"A new version of Aperture Launcher is available!\n"
+                    f"New version: {new_version}\n"
+                    f"Current version: {CURRENT_VERSION}\n\n"
+                    f"Do you want to download it?"
                 )
+                res = messagebox.askyesno("Update Available", msg)
                 if res:
                     webbrowser.open(url)
 

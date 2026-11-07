@@ -10,5 +10,17 @@
     "tab_launcher": "LAUNCHER",
     "news_loading": "Loading...",
     "news_error": "No internet\nconnection\n(joke...or\nnot?)",
-    "lang_btn": "LANG: EN"
+    "lang_btn": "LANG: EN",
+    "settings_title": "Settings",
+    "ram_alloc": "RAM Allocation (MB):",
+    "max_safe_ram": "(Max safe: {max} MB)",
+    "reset_theme": "Reset Theme to Default",
+    "applies_restart": "(Applies after restart)",
+    "open_mods": "Open Mods Folder",
+    "repair_build": "Repair Build (Force Update)",
+    "join_discord": "Join Discord Server",
+    "save_close": "Save & Close",
+    "msg_repair_info": "Mods folder cleared. Please restart the game to redownload.",
+    "msg_theme_reset": "Theme reset to default! Please restart the launcher.",
+    "msg_theme_error": "Theme Error"
 }
