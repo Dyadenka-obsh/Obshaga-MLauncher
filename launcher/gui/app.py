@@ -16,7 +16,7 @@ from launcher.settings import load_settings, save_settings
 from launcher.localization import load_lang
 from launcher.java_manager import ensure_jvm
 from launcher.packwiz import sync_modpack
-from launcher.auth_ely import get_ely_profile
+from launcher.auth_ely import get_ely_profile, get_offline_profile, validate_nickname
 from launcher.game_launcher import ensure_game_installed, launch_game
 from launcher.discord_rpc import DiscordRPC
 from launcher.updater import check_for_updates
@@ -408,30 +408,43 @@ class LauncherApp:
 
     def _run_pipeline(self) -> None:
         try:
-            nickname = self.nick_entry.get().strip()
-            if not nickname: raise ValueError("Enter nickname.")
+            nickname = validate_nickname(self.nick_entry.get())
 
             self.log("[SYS] Инициализация протокола...")
 
             if self.is_pirate:
                 self.log(f"[AUTH] Режим: Пиратский. Ник: {nickname}")
-                offline_uuid = str(uuid.uuid3(uuid.NAMESPACE_DNS, f"OfflinePlayer:{nickname}")).replace("-", "")
-                profile = {"nickname": nickname, "uuid": offline_uuid, "skin_url": ""}
+                profile = get_offline_profile(nickname)
             else:
                 self.log(f"[ELY] Запрос профиля {nickname!r}...")
                 try:
                     profile = get_ely_profile(nickname)
                     self.log(f"[ELY] UUID: {profile['uuid']}")
                 except Exception as e:
-                    fallback = messagebox.askyesno("ely.by недоступен", f"Ошибка:\n{e}\n\nЗапустить в пиратском режиме?")
-                    if fallback:
+                    fallback_event = threading.Event()
+                    fallback_result = [False]
+
+                    def _ask_dialog():
+                        try:
+                            fallback_result[0] = messagebox.askyesno(
+                                "ely.by недоступен",
+                                f"Ошибка:\n{e}\n\nЗапустить в пиратском режиме?"
+                            )
+                        finally:
+                            fallback_event.set()
+
+                    if self.root.winfo_exists():
+                        self.root.after(0, _ask_dialog)
+                        fallback_event.wait()
+
+                    if fallback_result[0]:
                         self.is_pirate = True
                         self.root.after(0, self._update_auth_label)
                         self.settings["is_pirate"] = True
                         save_settings(self.settings)
-                        offline_uuid = str(uuid.uuid3(uuid.NAMESPACE_DNS, f"OfflinePlayer:{nickname}")).replace("-", "")
-                        profile = {"nickname": nickname, "uuid": offline_uuid, "skin_url": ""}
-                    else: raise RuntimeError("Cancelled.")
+                        profile = get_offline_profile(nickname)
+                    else:
+                        raise RuntimeError("Cancelled.")
 
             self.log("[JVM] Проверка Java 21...")
             java_path = ensure_jvm(self.minecraft_dir, log=self.log)

@@ -9,9 +9,10 @@ PACKWIZ_BOOTSTRAP_URL = (
     "https://github.com/packwiz/packwiz-installer-bootstrap/releases/latest/download/"
     "packwiz-installer-bootstrap.jar"
 )
+PACKWIZ_BOOTSTRAP_SHA256 = "a8fbb24dc604278e97f4688e82d3d91a318b98efc08d5dbfcbcbcab6443d116c"
 
 # ---- Сервер ----
-SERVER_HOST = "185.9.145.7"
+SERVER_HOST = "obshaga.my-craft.cc."
 SERVER_PORT = "37015"
 
 # ---- JVM ----
