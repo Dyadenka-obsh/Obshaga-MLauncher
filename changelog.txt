@@ -1,3 +1,14 @@
+VERSION 1.2.1 - SECURITY & STABILITY UPDATE
+1. Fixed input validation for nicknames (regex enforcement to prevent CLI & URL injections).
+2. Added SHA-256 integrity verification for the Packwiz bootstrap installer.
+3. Switched server connection address to official DNS domain (obshaga.my-craft.cc.).
+4. Fixed a race condition / freeze when showing ely.by fallback dialog (thread-safe GUI execution).
+5. Hardened RAM and JVM argument handling to eliminate potential injection vulnerabilities.
+6. Added strict language whitelist to prevent path traversal in localization files.
+7. Fixed typo in requirements.txt (pysence -> pypresence) and added packaging.
+8. Enhanced update checker with robust SemVer / PEP 440 version comparison.
+9. Cleaned up duplicate imports and centralized offline UUID generation logic.
+
 VERSION 1.2.0 - THE SOCIAL UPDATE
 1. Added Discord Rich Presence integration.
 2. Added a Discord invite link button in the settings.
