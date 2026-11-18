@@ -1,0 +1,53 @@
+VERSION 2.0.0 - REBORN
+1. Complete architectural rewrite of the launcher from Python/Tkinter to C# (.NET 10 WPF).
+2. Introduced dual-theme system with on-the-fly switching:
+   - Modern 2.0: sleek dark hi-tech Aperture Science design with glowing amber accents.
+   - Retro 1973: authentic vintage CRT terminal style matching v1.2 with scanlines and Aperture 1973 banner.
+3. Added custom Minecraft installation directory selection in Settings with native folder browser.
+4. Window dragging improvements: the window can now be freely repositioned anywhere on the screen.
+5. Integrated CmlLib.Core for reliable Minecraft 1.21.1 and NeoForge process lifecycle management.
+6. Automated Java 21 environment setup with automatic OpenJDK (Adoptium Temurin) download support.
+7. Enhanced Discord Rich Presence integration via official .NET DiscordRPC.
+8. Preserved full Ely.by skin system integration and deterministic offline player UUID v3 generation.
+9. Streamlined Packwiz bootstrap modpack synchronization with SHA-256 verification.
+10. Added MIT License and full localization (English, Russian, Ukrainian).
+
+VERSION 1.2.1 - SECURITY & STABILITY UPDATE
+1. Fixed input validation for nicknames (regex enforcement to prevent CLI & URL injections).
+2. Added SHA-256 integrity verification for the Packwiz bootstrap installer.
+3. Switched server connection address to official DNS domain (obshaga.my-craft.cc.).
+4. Fixed a race condition / freeze when showing ely.by fallback dialog (thread-safe GUI execution).
+5. Hardened RAM and JVM argument handling to eliminate potential injection vulnerabilities.
+6. Added strict language whitelist to prevent path traversal in localization files.
+7. Fixed typo in requirements.txt (pysence -> pypresence) and added packaging.
+8. Enhanced update checker with robust SemVer / PEP 440 version comparison.
+9. Cleaned up duplicate imports and centralized offline UUID generation logic.
+
+VERSION 1.2.0 - THE SOCIAL UPDATE
+1. Added Discord Rich Presence integration.
+2. Added a Discord invite link button in the settings.
+3. Added a custom RAM allocation slider with a safety limit.
+4. Added "Open Mods Folder" button for quick access.
+5. Added "Repair Build" button to forcefully redownload broken mods.
+6. Added automatic update checker.
+7. Added "Reset Theme to Default" button in settings.
+8. Full localization for the Settings menu (English, Russian, Ukrainian).
+
+VERSION 1.1.1 - OFFLINE FIX
+1. Fixed a critical crash in Pirate (offline) mode caused by an invalid empty UUID.
+2. Implemented proper offline UUID generation (matching vanilla Minecraft behavior).
+3. Updated the .gitignore to keep the repository clean (removed build artifacts, caches, and local settings).
+4. Improved stability for players using integrated graphics and legacy drivers.
+5. Minor localization and UI text fixes.
+
+VERSION 1.1 - THE APERTURE UPDATE
+1. Added multi-language support: English, Russian, Ukrainian (switchable in UI).
+2. Implemented separate changelog tabs for Modpack and Launcher updates.
+3. Added external theme engine (theme.json) for custom colors, fonts, and logos.
+4. Added hover effects for UI buttons.
+5. Improved ely.by authentication with automatic fallback to offline/pirate mode.
+6. Added automatic skin loading support via CustomSkinLoader and JVM arguments.
+7. Hidden the Windows CMD console window when launching Minecraft.
+8. Added offline-mode check for NeoForge installation (bypasses Maven blocks).
+9. Added auto-saving for nickname, language, and auth mode.
+10. Minor UI/UX improvements and bug fixes.
