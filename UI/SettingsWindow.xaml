@@ -12,7 +12,8 @@
         AllowsTransparency="True"
         BorderBrush="{DynamicResource BrushWindowBorder}"
         BorderThickness="2"
-        MouseLeftButtonDown="Window_MouseLeftButtonDown">
+        MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        Loaded="Window_Loaded">
 
     <Window.Resources>
         <!-- Modern Scrollbar Style -->
@@ -324,7 +325,7 @@
                             <TextBlock x:Name="TxtRamValue" Text="4096 МБ (4.0 ГБ)" HorizontalAlignment="Right" Foreground="{DynamicResource BrushTextAccent}" FontWeight="Bold" FontSize="13"/>
                         </DockPanel>
                         
-                        <Slider x:Name="SliderRam" Style="{StaticResource ModernSliderStyle}" 
+                        <Slider x:Name="SliderRam"
                                 Minimum="1024" Maximum="16384" SmallChange="512" LargeChange="1024" 
                                 IsSnapToTickEnabled="True" TickFrequency="1024" Value="4096" Margin="0,4,0,6"
                                 ValueChanged="SliderRam_ValueChanged"/>

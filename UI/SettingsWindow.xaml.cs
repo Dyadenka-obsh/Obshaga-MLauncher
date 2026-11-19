@@ -31,10 +31,27 @@ namespace LauncherC.UI
             CalculateSystemRam();
             ApplyLocalization();
             LoadCurrentValues();
+            // Кнопки тем обновляем сразу, слайдер — в Loaded (шаблон ещё не применён)
             UpdateThemeButtonStates(ThemeManager.CurrentTheme);
         }
 
         #region Перетаскивание окна
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Применяем стиль ползунка ПОСЛЕ полной инициализации шаблона WPF.
+            // Если вызвать раньше (в конструкторе), шаблон может не применяться.
+            ApplySliderStyle(ThemeManager.CurrentTheme);
+        }
+
+        private void ApplySliderStyle(AppTheme theme)
+        {
+            string key = theme == AppTheme.Modern ? "ModernSliderStyle" : "RetroSliderStyle";
+            if (TryFindResource(key) is Style style)
+            {
+                SliderRam.Style = style;
+            }
+        }
 
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
@@ -74,6 +91,7 @@ namespace LauncherC.UI
             ThemeManager.ApplyTheme(AppTheme.Modern);
             _settings.Theme = "modern";
             UpdateThemeButtonStates(AppTheme.Modern);
+            ApplySliderStyle(AppTheme.Modern);
         }
 
         private void BtnThemeRetro_Click(object sender, RoutedEventArgs e)
@@ -81,6 +99,7 @@ namespace LauncherC.UI
             ThemeManager.ApplyTheme(AppTheme.Retro);
             _settings.Theme = "retro";
             UpdateThemeButtonStates(AppTheme.Retro);
+            ApplySliderStyle(AppTheme.Retro);
         }
 
         private void UpdateThemeButtonStates(AppTheme active)
