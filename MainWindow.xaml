@@ -15,11 +15,6 @@
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
 
     <Window.Resources>
-        <!-- Modern Scrollbar Style -->
-        <Style TargetType="ScrollBar">
-            <Setter Property="Background" Value="{DynamicResource BrushConsoleBg}"/>
-            <Setter Property="Width" Value="8"/>
-        </Style>
 
         <!-- Dynamic Themed Button Style -->
         <Style x:Key="ModernBtn" TargetType="Button">

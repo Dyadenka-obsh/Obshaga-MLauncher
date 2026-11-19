@@ -31,25 +31,27 @@ namespace LauncherC.UI
             CalculateSystemRam();
             ApplyLocalization();
             LoadCurrentValues();
-            // Кнопки тем обновляем сразу, слайдер — в Loaded (шаблон ещё не применён)
             UpdateThemeButtonStates(ThemeManager.CurrentTheme);
+            ApplySliderStyle(ThemeManager.CurrentTheme);
         }
 
         #region Перетаскивание окна
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            // Применяем стиль ползунка ПОСЛЕ полной инициализации шаблона WPF.
-            // Если вызвать раньше (в конструкторе), шаблон может не применяться.
             ApplySliderStyle(ThemeManager.CurrentTheme);
         }
 
         private void ApplySliderStyle(AppTheme theme)
         {
             string key = theme == AppTheme.Modern ? "ModernSliderStyle" : "RetroSliderStyle";
-            if (TryFindResource(key) is Style style)
+            if (Application.Current?.TryFindResource(key) is Style appStyle)
             {
-                SliderRam.Style = style;
+                SliderRam.Style = appStyle;
+            }
+            else if (TryFindResource(key) is Style winStyle)
+            {
+                SliderRam.Style = winStyle;
             }
         }
 

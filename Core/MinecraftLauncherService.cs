@@ -297,7 +297,14 @@ namespace LauncherC.Core
             var mcPath = new MinecraftPath(minecraftDir);
             var launcher = new CMLauncher(mcPath);
 
-            var session = new MSession(profile.Nickname, profile.Uuid, "mock_token");
+            // В CmlLib.Core конструктор MSession имеет порядок параметров:
+            // MSession(string username, string accessToken, string uuid)
+            // Передача uuid вторым параметром приводила к передаче "mock_token" в аргумент --uuid игрового процесса!
+            string validUuid = !string.IsNullOrWhiteSpace(profile.Uuid)
+                ? profile.Uuid.Trim()
+                : Guid.NewGuid().ToString("N");
+
+            var session = new MSession(profile.Nickname, "mock_token", validUuid);
 
             var launchOption = new MLaunchOption
             {
@@ -319,11 +326,18 @@ namespace LauncherC.Core
             // КРИТИЧЕСКИЙ ФИКС: Очистка дубликатов библиотек из classpath (-cp и -p),
             // чтобы UnionFileSystem NeoForge не падал с DuplicateKeyException
             string originalArgs = process.StartInfo.Arguments;
+
+            // Защита аргумента --uuid от некорректных токенов
+            if (originalArgs.Contains("--uuid mock_token"))
+            {
+                originalArgs = originalArgs.Replace("--uuid mock_token", $"--uuid {validUuid}");
+            }
+
             string cleanArgs = DeduplicateClasspath(originalArgs);
-            if (!string.Equals(originalArgs, cleanArgs, StringComparison.Ordinal))
+            if (!string.Equals(process.StartInfo.Arguments, cleanArgs, StringComparison.Ordinal))
             {
                 process.StartInfo.Arguments = cleanArgs;
-                log("[GAME] Classpath успешно очищен от дубликатов библиотек для NeoForge.");
+                log("[GAME] Параметры запуска и Classpath успешно верифицированы.");
             }
 
             process.StartInfo.WorkingDirectory = minecraftDir;

@@ -69,6 +69,18 @@ namespace LauncherC.Core
                 res["CornerRadiusWindow"] = new CornerRadius(0);
                 res["CornerRadiusCard"] = new CornerRadius(0);
                 res["CornerRadiusButton"] = new CornerRadius(0);
+                res["CornerRadiusThumb"] = new CornerRadius(0);
+
+                // Ползунки прокрутки (ScrollBar) - в стиле ретро терминала 1973
+                res["BrushScrollTrack"] = new SolidColorBrush(Color.FromRgb(0x14, 0x0B, 0x04));
+                res["BrushScrollThumb"] = new SolidColorBrush(Color.FromRgb(0x8B, 0x5A, 0x2B)); // Винтажная бронза
+                res["BrushScrollThumbHover"] = new SolidColorBrush(Color.FromRgb(0xD4, 0xAF, 0x37)); // Золото
+
+                // Ползунок настройки памяти (Slider) в ретро-стиле
+                if (Application.Current?.TryFindResource("RetroSliderStyle") is Style retroSlider)
+                {
+                    res["ThemedSliderStyle"] = retroSlider;
+                }
 
                 // Видимость CRT-сканлайнов и ретро-баннера
                 res["ScanlinesVisibility"] = Visibility.Visible;
@@ -115,6 +127,18 @@ namespace LauncherC.Core
                 res["CornerRadiusWindow"] = new CornerRadius(0);
                 res["CornerRadiusCard"] = new CornerRadius(10);
                 res["CornerRadiusButton"] = new CornerRadius(6);
+                res["CornerRadiusThumb"] = new CornerRadius(4);
+
+                // Ползунки прокрутки (ScrollBar) - в стиле Modern 2.0
+                res["BrushScrollTrack"] = new SolidColorBrush(Color.FromRgb(0x0E, 0x10, 0x14));
+                res["BrushScrollThumb"] = new SolidColorBrush(Color.FromRgb(0x28, 0x30, 0x40)); // Аккуратный сланцевый ползунок
+                res["BrushScrollThumbHover"] = new SolidColorBrush(Color.FromRgb(0xFF, 0x9A, 0x00)); // Неоновый янтарь
+
+                // Ползунок настройки памяти (Slider) в современном стиле
+                if (Application.Current?.TryFindResource("ModernSliderStyle") is Style modernSlider)
+                {
+                    res["ThemedSliderStyle"] = modernSlider;
+                }
 
                 // Сканлайны и ретро-баннер отключены в современной теме
                 res["ScanlinesVisibility"] = Visibility.Collapsed;
