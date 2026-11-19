@@ -43,5 +43,9 @@
     "theme_btn_modern": "🎨 THEME: MODERN",
     "theme_btn_retro": "🎨 THEME: RETRO 1973",
     "msg_game_running": "Game is already running! Please wait for process to exit.",
-    "msg_nick_empty": "Nickname must contain 3-16 alphanumeric characters or underscores!"
+    "msg_nick_empty": "Nickname must contain 3-16 alphanumeric characters or underscores!",
+    "jvm_args_label": "Java (JVM) Launch Arguments:",
+    "jvm_args_default": "Default",
+    "jvm_args_hint": "Memory parameters (-Xmx, -Xms) are controlled by the RAM slider above.",
+    "jvm_args_memory_warning": "Memory parameters (-Xmx / -Xms) were removed from JVM arguments!\nPlease use the RAM Allocation slider above to configure memory."
 }

@@ -91,6 +91,7 @@ namespace LauncherC.UI
                 BtnThemeModern.SetResourceReference(Button.ForegroundProperty, "BrushAccentText");
                 BtnThemeRetro.SetResourceReference(Button.BackgroundProperty, "BrushBtnNormalBg");
                 BtnThemeRetro.SetResourceReference(Button.ForegroundProperty, "BrushTextPrimary");
+                SliderRam.Style = (Style)FindResource("ModernSliderStyle");
             }
             else
             {
@@ -98,6 +99,7 @@ namespace LauncherC.UI
                 BtnThemeModern.SetResourceReference(Button.ForegroundProperty, "BrushTextPrimary");
                 BtnThemeRetro.SetResourceReference(Button.BackgroundProperty, "BrushAccent");
                 BtnThemeRetro.SetResourceReference(Button.ForegroundProperty, "BrushAccentText");
+                SliderRam.Style = (Style)FindResource("RetroSliderStyle");
             }
         }
 
@@ -120,6 +122,10 @@ namespace LauncherC.UI
 
             LblCustomJava.Text = _loc["custom_java_label"];
             BtnBrowseJava.Content = _loc["custom_java_browse"];
+
+            LblJvmArgs.Text = _loc["jvm_args_label"];
+            BtnDefaultJvmArgs.Content = _loc["jvm_args_default"];
+            LblJvmArgsHint.Text = _loc["jvm_args_hint"];
 
             BtnOpenGameDir.Content = "📁 " + _loc["open_game_dir"];
             BtnOpenMods.Content = "📦 " + _loc["open_mods"];
@@ -146,6 +152,11 @@ namespace LauncherC.UI
 
             // Путь к Java
             TxtCustomJava.Text = _settings.CustomJavaPath ?? "";
+
+            // Аргументы запуска JVM
+            TxtJvmArgs.Text = !string.IsNullOrWhiteSpace(_settings.JvmArguments)
+                ? _settings.JvmArguments
+                : Config.DefaultJvmArguments;
         }
 
         private void CalculateSystemRam()
@@ -265,6 +276,28 @@ namespace LauncherC.UI
             Process.Start(new ProcessStartInfo(Config.DiscordInviteUrl) { UseShellExecute = true });
         }
 
+        private void BtnDefaultJvmArgs_Click(object sender, RoutedEventArgs e)
+        {
+            TxtJvmArgs.Text = Config.DefaultJvmArguments;
+        }
+
+        private void TxtJvmArgs_LostFocus(object sender, RoutedEventArgs e)
+        {
+            ValidateJvmArgs();
+        }
+
+        private bool ValidateJvmArgs()
+        {
+            string text = TxtJvmArgs.Text ?? string.Empty;
+            if (System.Text.RegularExpressions.Regex.IsMatch(text, @"-Xm[xs]\S*", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+            {
+                MessageBox.Show(this, _loc["jvm_args_memory_warning"], _loc["settings_title"], MessageBoxButton.OK, MessageBoxImage.Warning);
+                TxtJvmArgs.Text = MinecraftLauncherService.SanitizeJvmArguments(text);
+                return false;
+            }
+            return true;
+        }
+
         private void BtnSaveClose_Click(object sender, RoutedEventArgs e)
         {
             string newPath = TxtMinecraftPath.Text.Trim();
@@ -281,6 +314,11 @@ namespace LauncherC.UI
 
             _settings.RamMb = (int)SliderRam.Value;
             _settings.CustomJavaPath = TxtCustomJava.Text.Trim();
+
+            // Защита от дурака: санитизация JVM аргументов
+            ValidateJvmArgs();
+            _settings.JvmArguments = MinecraftLauncherService.SanitizeJvmArguments(TxtJvmArgs.Text);
+
             _settings.Theme = ThemeManager.ToStringName(ThemeManager.CurrentTheme);
 
             SettingsManager.SaveSettings(_settings);

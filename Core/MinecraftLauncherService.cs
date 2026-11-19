@@ -156,6 +156,93 @@ namespace LauncherC.Core
         }
 
         /// <summary>
+        /// Очищает пользовательские аргументы JVM от параметров выделения памяти (-Xmx, -Xms).
+        /// Защита от дурака: память контролируется строго через ползунок настроек.
+        /// </summary>
+        public static string SanitizeJvmArguments(string? args)
+        {
+            if (string.IsNullOrWhiteSpace(args))
+                return string.Empty;
+
+            // Удаляем любые флаги -Xmx и -Xms (например -Xmx4G, -Xms1024M, -Xmx=4096m)
+            string clean = Regex.Replace(args, @"\s*-Xm[xs]\S*", "", RegexOptions.IgnoreCase);
+            return clean.Trim();
+        }
+
+        /// <summary>
+        /// Удаляет дубликаты JAR-библиотек из -cp (classpath) и -p (module-path).
+        /// Решает критическую ошибку вылета NeoForge UnionFileSystem:
+        /// java.lang.IllegalStateException: Duplicate key ... commons-lang3-3.14.0.jar
+        /// </summary>
+        public static string DeduplicateClasspath(string arguments)
+        {
+            if (string.IsNullOrWhiteSpace(arguments))
+                return arguments;
+
+            var cpPatterns = new[] { "-cp ", "-classpath ", "-p ", "--module-path " };
+            string result = arguments;
+
+            foreach (var pattern in cpPatterns)
+            {
+                int index = result.IndexOf(pattern, StringComparison.OrdinalIgnoreCase);
+                if (index == -1) continue;
+
+                int valueStart = index + pattern.Length;
+                if (valueStart >= result.Length) continue;
+
+                char quoteChar = '\0';
+                if (result[valueStart] == '"' || result[valueStart] == '\'')
+                {
+                    quoteChar = result[valueStart];
+                    valueStart++;
+                }
+
+                int valueEnd;
+                if (quoteChar != '\0')
+                {
+                    valueEnd = result.IndexOf(quoteChar, valueStart);
+                    if (valueEnd == -1) valueEnd = result.Length;
+                }
+                else
+                {
+                    valueEnd = result.IndexOf(' ', valueStart);
+                    if (valueEnd == -1) valueEnd = result.Length;
+                }
+
+                string rawPath = result.Substring(valueStart, valueEnd - valueStart);
+                var entries = rawPath.Split(';');
+
+                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var cleanEntries = new List<string>();
+                foreach (var entry in entries)
+                {
+                    string trimmed = entry.Trim();
+                    if (!string.IsNullOrEmpty(trimmed) && seen.Add(trimmed))
+                    {
+                        cleanEntries.Add(trimmed);
+                    }
+                }
+
+                string newPath = string.Join(";", cleanEntries);
+                int replaceStart = valueStart;
+                int replaceLength = valueEnd - valueStart;
+
+                if (quoteChar != '\0')
+                {
+                    newPath = quoteChar + newPath + quoteChar;
+                    replaceStart = valueStart - 1;
+                    replaceLength = (valueEnd < result.Length && result[valueEnd] == quoteChar)
+                        ? (valueEnd - replaceStart + 1)
+                        : (valueEnd - replaceStart);
+                }
+
+                result = result.Substring(0, replaceStart) + newPath + result.Substring(replaceStart + replaceLength);
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Формирует параметры запуска и запускает процесс Minecraft.
         /// </summary>
         public static async Task<Process> LaunchGameAsync(
@@ -164,6 +251,7 @@ namespace LauncherC.Core
             string javaPath,
             PlayerProfile profile,
             int ramMb,
+            string? customJvmArgs,
             Action<string> log,
             Action? onGameExited = null)
         {
@@ -174,16 +262,32 @@ namespace LauncherC.Core
                 safeRam = 4096;
             }
 
-            // Формирование JVM аргументов
+            // Формирование JVM аргументов:
+            // 1. Память от ползунка (единственный параметр -Xmx)
             var jvmArgs = new List<string>
             {
-                $"-Xmx{safeRam}M",
-                "-XX:+UseG1GC",
-                "-XX:+ParallelRefProcEnabled",
-                "-XX:MaxGCPauseMillis=200"
+                $"-Xmx{safeRam}M"
             };
 
-            // Передача скина ely.by если задан
+            // 2. Пользовательские аргументы с защитой от дурака
+            string sanitizedCustom = SanitizeJvmArguments(customJvmArgs);
+            if (!string.IsNullOrWhiteSpace(sanitizedCustom))
+            {
+                var tokens = sanitizedCustom.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                jvmArgs.AddRange(tokens);
+            }
+            else
+            {
+                // Дефолтные флаги оптимизации G1GC
+                jvmArgs.AddRange(new[]
+                {
+                    "-XX:+UseG1GC",
+                    "-XX:+ParallelRefProcEnabled",
+                    "-XX:MaxGCPauseMillis=200"
+                });
+            }
+
+            // 3. Передача скина ely.by если задан
             if (!string.IsNullOrWhiteSpace(profile.SkinUrl) &&
                 Regex.IsMatch(profile.SkinUrl, @"^https?://[a-zA-Z0-9.\-_/:]+$"))
             {
@@ -211,6 +315,16 @@ namespace LauncherC.Core
 
             log("[GAME] Генерация команды запуска игрового клиента...");
             var process = await launcher.CreateProcessAsync(launchOption);
+
+            // КРИТИЧЕСКИЙ ФИКС: Очистка дубликатов библиотек из classpath (-cp и -p),
+            // чтобы UnionFileSystem NeoForge не падал с DuplicateKeyException
+            string originalArgs = process.StartInfo.Arguments;
+            string cleanArgs = DeduplicateClasspath(originalArgs);
+            if (!string.Equals(originalArgs, cleanArgs, StringComparison.Ordinal))
+            {
+                process.StartInfo.Arguments = cleanArgs;
+                log("[GAME] Classpath успешно очищен от дубликатов библиотек для NeoForge.");
+            }
 
             process.StartInfo.WorkingDirectory = minecraftDir;
             process.StartInfo.RedirectStandardOutput = true;

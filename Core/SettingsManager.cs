@@ -44,6 +44,13 @@ namespace LauncherC.Core
         /// </summary>
         [JsonPropertyName("theme")]
         public string Theme { get; set; } = "modern";
+
+        /// <summary>
+        /// Пользовательские аргументы JVM.
+        /// Защита от дурака: параметры памяти (-Xmx, -Xms) отсекаются автоматически и управляются ползунком.
+        /// </summary>
+        [JsonPropertyName("jvm_arguments")]
+        public string JvmArguments { get; set; } = Config.DefaultJvmArguments;
     }
 
     /// <summary>

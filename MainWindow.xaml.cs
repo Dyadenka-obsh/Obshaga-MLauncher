@@ -587,6 +587,7 @@ namespace LauncherC
                     javaPath,
                     profile,
                     ram,
+                    _settings.JvmArguments,
                     Log,
                     onGameExited: () =>
                     {
