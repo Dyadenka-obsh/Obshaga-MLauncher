@@ -149,6 +149,12 @@ namespace LauncherC.Core
             AddIfMissing("game_dir_browse", "Обзор...");
             AddIfMissing("game_dir_default", "По умолчанию");
             AddIfMissing("status_ready", "Готов к запуску");
+            AddIfMissing("btn_in_game", "В ИГРЕ");
+            AddIfMissing("status_in_launcher", "В лаунчере");
+            AddIfMissing("error_launch_title", "Ошибка запуска");
+            AddIfMissing("error_launch_prefix", "Ошибка запуска Minecraft:");
+            AddIfMissing("err_neoforge_not_found", "Не удалось обнаружить установленный NeoForge после завершения работы инсталлятора.");
+            AddIfMissing("log_sys_init", "[SYS] Система Aperture Science LauncherC инициализирована.");
         }
     }
 }

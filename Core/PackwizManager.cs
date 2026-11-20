@@ -33,6 +33,7 @@ namespace LauncherC.Core
         /// </summary>
         public static async Task EnsureBootstrapAsync(string minecraftDir, Action<string> log, CancellationToken ct = default)
         {
+            var loc = LocalizationManager.Instance;
             string jarPath = Path.Combine(minecraftDir, "packwiz-installer-bootstrap.jar");
             string expectedHash = Config.PackwizBootstrapSha256.ToLowerInvariant();
 
@@ -44,13 +45,13 @@ namespace LauncherC.Core
                     return; // Файл уже проверен и готов
                 }
 
-                log("[PACKWIZ] Хэш существующего bootstrap-файла некорректен, повторная загрузка...");
+                log(loc["log_packwiz_hash_mismatch"]);
                 try { File.Delete(jarPath); } catch { }
             }
 
             Directory.CreateDirectory(minecraftDir);
             string tempPath = jarPath + ".tmp";
-            log("[PACKWIZ] Загрузка проверенного packwiz-installer-bootstrap.jar...");
+            log(loc["log_packwiz_downloading"]);
 
             using (var request = new HttpRequestMessage(HttpMethod.Get, Config.PackwizBootstrapUrl))
             {
@@ -68,13 +69,13 @@ namespace LauncherC.Core
             {
                 if (File.Exists(tempPath)) File.Delete(tempPath);
                 throw new InvalidOperationException(
-                    $"Нарушена целостность packwiz-installer-bootstrap! Ожидался хэш {expectedHash}, получен {downloadedHash}"
+                    loc.Get("err_packwiz_integrity", expectedHash, downloadedHash)
                 );
             }
 
             if (File.Exists(jarPath)) File.Delete(jarPath);
             File.Move(tempPath, jarPath);
-            log("[PACKWIZ] Целостность bootstrap-файла успешно подтверждена.");
+            log(loc["log_packwiz_verified"]);
         }
 
         /// <summary>
@@ -87,6 +88,7 @@ namespace LauncherC.Core
             Action<string> log,
             CancellationToken ct = default)
         {
+            var loc = LocalizationManager.Instance;
             await EnsureBootstrapAsync(minecraftDir, log, ct);
 
             string jarPath = Path.Combine(minecraftDir, "packwiz-installer-bootstrap.jar");
@@ -112,7 +114,7 @@ namespace LauncherC.Core
                 StandardErrorEncoding = System.Text.Encoding.UTF8
             };
 
-            log($"[PACKWIZ] Запуск синхронизации: {execJava} -jar {Path.GetFileName(jarPath)} -g -s client...");
+            log(loc.Get("log_packwiz_run_sync", $"{execJava} -jar {Path.GetFileName(jarPath)} -g -s client"));
 
             using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
 
@@ -140,10 +142,10 @@ namespace LauncherC.Core
 
             if (process.ExitCode != 0)
             {
-                throw new InvalidOperationException($"packwiz-installer завершился с ошибкой (код {process.ExitCode})");
+                throw new InvalidOperationException(loc.Get("err_packwiz_failed", process.ExitCode));
             }
 
-            log("[PACKWIZ] Синхронизация сборки успешно завершена.");
+            log(loc["log_packwiz_success"]);
         }
 
         /// <summary>

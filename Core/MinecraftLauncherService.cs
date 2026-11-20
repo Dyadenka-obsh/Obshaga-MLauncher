@@ -41,6 +41,19 @@ namespace LauncherC.Core
             IProgress<double>? progress = null,
             CancellationToken ct = default)
         {
+            var loc = LocalizationManager.Instance;
+            Directory.CreateDirectory(minecraftDir);
+
+            // 0. КРИТИЧЕСКИЙ ФИКС ДЛЯ ЧИСТОЙ УСТАНОВКИ:
+            // Инсталлятор NeoForge (как и Forge) требует обязательного наличия файла launcher_profiles.json
+            // в целевой папке игры, иначе мгновенно падает с ошибкой:
+            // "There is no minecraft launcher profile in ..., you need to run the launcher first!"
+            string launcherProfilesPath = Path.Combine(minecraftDir, "launcher_profiles.json");
+            if (!File.Exists(launcherProfilesPath))
+            {
+                File.WriteAllText(launcherProfilesPath, "{\n  \"profiles\": {},\n  \"settings\": {},\n  \"version\": 3\n}");
+            }
+
             var mcPath = new MinecraftPath(minecraftDir);
             var launcher = new CMLauncher(mcPath);
 
@@ -57,36 +70,36 @@ namespace LauncherC.Core
                 if (neoforgeDirs.Any())
                 {
                     string existingVersion = neoforgeDirs.Last()!;
-                    log($"[GAME] Найдена установленная версия NeoForge: {existingVersion}");
+                    log(loc.Get("log_neoforge_found", existingVersion));
                     return existingVersion;
                 }
             }
 
             // 2. Скачивание базовых файлов Minecraft 1.21.1 при необходимости
-            log($"[GAME] Базовая версия Minecraft {Config.MinecraftVersion} проверяется...");
+            log(loc.Get("log_mc_checking", Config.MinecraftVersion));
             try
             {
                 var version = await launcher.GetVersionAsync(Config.MinecraftVersion);
                 if (version != null)
                 {
-                    log($"[GAME] Загрузка ресурсов для Minecraft {Config.MinecraftVersion}...");
+                    log(loc.Get("log_mc_downloading", Config.MinecraftVersion));
                     await launcher.CheckAndDownloadAsync(version);
                 }
             }
             catch (Exception ex)
             {
-                log($"[GAME] Проверка ресурсов через CmlLib: {ex.Message}");
+                log($"[GAME] CmlLib: {ex.Message}");
             }
 
             // 3. Установка NeoForge через официальный headless installer
-            log($"[GAME] Установка модлоадера {Config.ModLoader} для {Config.MinecraftVersion}...");
+            log(loc.Get("log_loader_installing", Config.ModLoader, Config.MinecraftVersion));
             string neoVersion = await GetLatestNeoForgeVersionAsync(Config.MinecraftVersion);
-            log($"[GAME] Целевая версия NeoForge: {neoVersion}");
+            log(loc.Get("log_neoforge_target", neoVersion));
 
             string installerUrl = $"https://maven.neoforged.net/releases/net/neoforged/neoforge/{neoVersion}/neoforge-{neoVersion}-installer.jar";
             string installerJar = Path.Combine(minecraftDir, $"neoforge-{neoVersion}-installer.jar");
 
-            log($"[GAME] Скачивание инсталлятора NeoForge: {installerUrl}...");
+            log(loc.Get("log_neoforge_download", installerUrl));
             using (var resp = await HttpClient.GetAsync(installerUrl, HttpCompletionOption.ResponseHeadersRead, ct))
             {
                 resp.EnsureSuccessStatusCode();
@@ -95,13 +108,19 @@ namespace LauncherC.Core
                 await inStream.CopyToAsync(outStream, ct);
             }
 
-            log("[GAME] Запуск установки NeoForge в фоновом режиме (это может занять 1-2 минуты)...");
+            log(loc["log_neoforge_installing"]);
 
             string execJava = javaPath;
             if (execJava.EndsWith("javaw.exe", StringComparison.OrdinalIgnoreCase))
             {
                 string partner = execJava.Substring(0, execJava.Length - 9) + "java.exe";
                 if (File.Exists(partner)) execJava = partner;
+            }
+
+            // Повторно гарантируем наличие profiles перед запуском процесса инсталлятора
+            if (!File.Exists(launcherProfilesPath))
+            {
+                File.WriteAllText(launcherProfilesPath, "{\n  \"profiles\": {},\n  \"settings\": {},\n  \"version\": 3\n}");
             }
 
             var psi = new ProcessStartInfo
@@ -132,6 +151,11 @@ namespace LauncherC.Core
             proc.BeginErrorReadLine();
             await proc.WaitForExitAsync(ct);
 
+            if (proc.ExitCode != 0)
+            {
+                log($"[NEOFORGE] Installer finished with exit code {proc.ExitCode}");
+            }
+
             // Удаляем временный файл инсталлятора
             try { File.Delete(installerJar); } catch { }
 
@@ -147,12 +171,12 @@ namespace LauncherC.Core
                 if (neoforgeDirs.Any())
                 {
                     string installedId = neoforgeDirs.Last()!;
-                    log($"[GAME] NeoForge успешно установлен: {installedId}");
+                    log(loc.Get("log_neoforge_success", installedId));
                     return installedId;
                 }
             }
 
-            throw new InvalidOperationException("Не удалось обнаружить установленный NeoForge после завершения работы инсталлятора.");
+            throw new InvalidOperationException(loc["err_neoforge_not_found"]);
         }
 
         /// <summary>
@@ -320,7 +344,8 @@ namespace LauncherC.Core
                 GameLauncherVersion = Config.CurrentVersion
             };
 
-            log("[GAME] Генерация команды запуска игрового клиента...");
+            var loc = LocalizationManager.Instance;
+            log(loc["log_mc_generating_cmd"]);
             var process = await launcher.CreateProcessAsync(launchOption);
 
             // КРИТИЧЕСКИЙ ФИКС: Очистка дубликатов библиотек из classpath (-cp и -p),
@@ -337,7 +362,7 @@ namespace LauncherC.Core
             if (!string.Equals(process.StartInfo.Arguments, cleanArgs, StringComparison.Ordinal))
             {
                 process.StartInfo.Arguments = cleanArgs;
-                log("[GAME] Параметры запуска и Classpath успешно верифицированы.");
+                log(loc["log_mc_verified"]);
             }
 
             process.StartInfo.WorkingDirectory = minecraftDir;
@@ -367,11 +392,11 @@ namespace LauncherC.Core
 
             process.Exited += (_, _) =>
             {
-                log($"[SYS] Процесс Minecraft завершил работу (код выхода: {process.ExitCode}).");
+                log(loc.Get("log_mc_exited", process.ExitCode));
                 onGameExited?.Invoke();
             };
 
-            log("[GAME] Запуск процесса Minecraft...");
+            log(loc["log_mc_starting"]);
             process.Start();
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();

@@ -30,16 +30,18 @@ namespace LauncherC.Core
             IProgress<double>? progress = null,
             CancellationToken ct = default)
         {
+            var loc = LocalizationManager.Instance;
+
             // 1. Проверяем пользовательский путь, если указан
             if (!string.IsNullOrWhiteSpace(customJavaPath) && File.Exists(customJavaPath))
             {
-                log($"[JVM] Проверка пользовательского пути: {customJavaPath}");
+                log(loc.Get("log_jvm_custom_checking", customJavaPath));
                 if (CheckJavaVersion(customJavaPath) >= 21)
                 {
-                    log($"[JVM] Пользовательская Java 21+ подтверждена: {customJavaPath}");
+                    log(loc.Get("log_jvm_custom_verified", customJavaPath));
                     return customJavaPath;
                 }
-                log("[JVM] Предупреждение: Указанная пользовательская Java ниже версии 21. Ищем альтернативы...");
+                log(loc["log_jvm_custom_low"]);
             }
 
             // 2. Проверяем стандартный Mojang рантайм в папке игры
@@ -54,7 +56,7 @@ namespace LauncherC.Core
             string? localExe = FindJavaExeInDir(adoptiumDir);
             if (!string.IsNullOrEmpty(localExe) && CheckJavaVersion(localExe) >= 21)
             {
-                log($"[JVM] Обнаружена локальная Java 21: {localExe}");
+                log(loc.Get("log_jvm_local_found", localExe));
                 return localExe;
             }
 
@@ -62,14 +64,14 @@ namespace LauncherC.Core
             string? systemJava = FindSystemJava21();
             if (!string.IsNullOrEmpty(systemJava))
             {
-                log($"[JVM] Обнаружена системная Java 21: {systemJava}");
+                log(loc.Get("log_jvm_system_found", systemJava));
                 return systemJava;
             }
 
             // 5. Автоматическая загрузка Java 21
-            log("[JVM] Java 21 не найдена в системе.");
-            log("[JVM] Запуск автоматической загрузки OpenJDK 21 (Eclipse Temurin)...");
-            log("[JVM] Размер загрузки ~190 МБ. Пожалуйста, не закрывайте лаунчер.");
+            log(loc["log_jvm_not_found"]);
+            log(loc["log_jvm_download_start"]);
+            log(loc["log_jvm_download_size"]);
 
             return await DownloadAndInstallAdoptiumAsync(minecraftDir, log, progress, ct);
         }
@@ -83,6 +85,7 @@ namespace LauncherC.Core
             IProgress<double>? progress,
             CancellationToken ct)
         {
+            var loc = LocalizationManager.Instance;
             string runtimeRoot = Path.Combine(minecraftDir, "runtime");
             Directory.CreateDirectory(runtimeRoot);
 
@@ -91,7 +94,7 @@ namespace LauncherC.Core
 
             try
             {
-                log($"[JVM] Запрос загрузки с {Config.AdoptiumJava21Url}...");
+                log(loc.Get("log_jvm_download_req", Config.AdoptiumJava21Url));
 
                 using (var response = await HttpClient.GetAsync(Config.AdoptiumJava21Url, HttpCompletionOption.ResponseHeadersRead, ct))
                 {
@@ -118,7 +121,7 @@ namespace LauncherC.Core
                     }
                 }
 
-                log("[JVM] Загрузка архива завершена. Распаковка файлов...");
+                log(loc["log_jvm_extracting"]);
 
                 if (Directory.Exists(targetDir))
                 {
@@ -153,10 +156,10 @@ namespace LauncherC.Core
                 string? javaExe = FindJavaExeInDir(targetDir);
                 if (string.IsNullOrEmpty(javaExe))
                 {
-                    throw new FileNotFoundException("Не удалось обнаружить java.exe после распаковки рантайма.");
+                    throw new FileNotFoundException(loc["err_java_not_found"]);
                 }
 
-                log($"[JVM] Установка Java 21 успешно завершена: {javaExe}");
+                log(loc.Get("log_jvm_installed", javaExe));
                 return javaExe;
             }
             catch (Exception ex)
@@ -165,7 +168,7 @@ namespace LauncherC.Core
                 {
                     try { File.Delete(zipPath); } catch { }
                 }
-                throw new InvalidOperationException($"Ошибка загрузки или распаковки Java 21: {ex.Message}", ex);
+                throw new InvalidOperationException(loc.Get("err_java_download", ex.Message), ex);
             }
         }
 

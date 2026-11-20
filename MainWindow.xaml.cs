@@ -63,10 +63,10 @@ namespace LauncherC
             // 7. Загрузка новостей и чейнджлогов
             Task.Run(LoadChangelogsAsync);
 
-            Log("[SYS] Система Aperture Science LauncherC инициализирована.");
-            Log($"[SYS] Версия клиента: v{Config.CurrentVersion} (Build 2.0.0) | Платформа: .NET 10 WPF");
-            Log($"[SYS] Текущая тема оформления: {(currentTheme == AppTheme.Retro ? "Ретро 1973 (v1.2)" : "Современная 2.0")}");
-            Log($"[SYS] Активная папка игры: {SettingsManager.GetActiveMinecraftPath(_settings)}");
+            Log(_loc["log_sys_init"]);
+            Log(_loc.Get("log_sys_version", Config.CurrentVersion, "2.0.0", ".NET 10 WPF"));
+            Log(_loc.Get("log_sys_theme", currentTheme == AppTheme.Retro ? _loc["theme_opt_retro"] : _loc["theme_opt_modern"]));
+            Log(_loc.Get("log_sys_game_dir", SettingsManager.GetActiveMinecraftPath(_settings)));
         }
 
         #region Перетаскивание и управление окном
@@ -132,7 +132,7 @@ namespace LauncherC
             SettingsManager.SaveSettings(_settings);
 
             UpdateThemeDisplay(nextTheme);
-            Log($"[THEME] Тема оформления переключена на: {(nextTheme == AppTheme.Retro ? "Ретро 1973 (v1.2)" : "Современная 2.0")}");
+            Log(_loc.Get("log_theme_switched", nextTheme == AppTheme.Retro ? _loc["theme_opt_retro"] : _loc["theme_opt_modern"]));
         }
 
         private void OnThemeChanged(AppTheme newTheme)
@@ -194,6 +194,7 @@ namespace LauncherC
             string next = _loc.ToggleNextLanguage();
             _settings.Language = next;
             SettingsManager.SaveSettings(_settings);
+            Log(_loc.Get("log_lang_switched", next.ToUpperInvariant()));
         }
 
         #endregion
@@ -366,7 +367,7 @@ namespace LauncherC
             settingsWin.SettingsUpdated += () =>
             {
                 TxtRamHint.Text = $"{_settings.RamMb} MB";
-                Log($"[SETTINGS] Настройки обновлены. Папка игры: {SettingsManager.GetActiveMinecraftPath(_settings)}");
+                Log(_loc.Get("log_settings_updated", SettingsManager.GetActiveMinecraftPath(_settings)));
             };
             settingsWin.ShowDialog();
         }
@@ -415,11 +416,8 @@ namespace LauncherC
             {
                 Dispatcher.Invoke(() =>
                 {
-                    string msg = $"Доступна новая версия Aperture Launcher: {result.LatestVersion}!\n" +
-                                 $"Текущая версия: v{Config.CurrentVersion}\n\n" +
-                                 $"Открыть страницу загрузки обновления?";
-
-                    var ans = MessageBox.Show(this, msg, "Доступно обновление", MessageBoxButton.YesNo, MessageBoxImage.Information);
+                    string msg = _loc.Get("msg_update_available", result.LatestVersion ?? Config.CurrentVersion, Config.CurrentVersion);
+                    var ans = MessageBox.Show(this, msg, _loc["title_update_available"], MessageBoxButton.YesNo, MessageBoxImage.Information);
                     if (ans == MessageBoxResult.Yes)
                     {
                         Process.Start(new ProcessStartInfo(result.ReleaseUrl) { UseShellExecute = true });
@@ -436,7 +434,7 @@ namespace LauncherC
         {
             if (_isGameRunning)
             {
-                MessageBox.Show(this, _loc["msg_game_running"], "Внимание", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(this, _loc["msg_game_running"], _loc["title_warning"], MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -449,7 +447,7 @@ namespace LauncherC
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, ex.Message, "Ошибка ввода", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(this, ex.Message, _loc["title_input_error"], MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -467,27 +465,27 @@ namespace LauncherC
         {
             try
             {
-                Log("[SYS] Инициализация протокола запуска...");
+                Log(_loc["log_sys_launch_init"]);
 
                 // 1. Определение активной директории Minecraft
                 string mcDir = SettingsManager.GetActiveMinecraftPath(_settings);
-                Log($"[GAME] Активная папка игры: {mcDir}");
+                Log(_loc.Get("log_game_dir", mcDir));
 
                 // 2. Аутентификация игрока
                 PlayerProfile profile;
                 if (_settings.IsPirate)
                 {
-                    Log($"[AUTH] Режим: Пиратский. Ник: {nickname}");
+                    Log(_loc.Get("log_auth_pirate", nickname));
                     profile = AuthService.GetOfflineProfile(nickname);
-                    Log($"[AUTH] Сгенерирован детерминированный UUID: {profile.Uuid}");
+                    Log(_loc.Get("log_auth_uuid", profile.Uuid));
                 }
                 else
                 {
-                    Log($"[ELY] Запрос профиля '{nickname}' из ely.by Skinsystem API...");
+                    Log(_loc.Get("log_ely_request", nickname));
                     try
                     {
                         profile = await AuthService.GetElyProfileAsync(nickname);
-                        Log($"[ELY] Игрок авторизован. UUID: {profile.Uuid}");
+                        Log(_loc.Get("log_ely_authorized", profile.Uuid));
                     }
                     catch (Exception ex)
                     {
@@ -497,8 +495,8 @@ namespace LauncherC
                         Dispatcher.Invoke(() =>
                         {
                             var res = MessageBox.Show(this,
-                                $"Не удалось подключиться к ely.by для профиля '{nickname}':\n{ex.Message}\n\nЗапустить игру в пиратском режиме?",
-                                "ely.by недоступен",
+                                _loc.Get("msg_ely_fallback_prompt", nickname, ex.Message),
+                                _loc["title_ely_unavailable"],
                                 MessageBoxButton.YesNo,
                                 MessageBoxImage.Question);
                             switchToPirate = (res == MessageBoxResult.Yes);
@@ -511,18 +509,18 @@ namespace LauncherC
                             Dispatcher.Invoke(UpdateAuthModeDisplay);
 
                             profile = AuthService.GetOfflineProfile(nickname);
-                            Log($"[AUTH] Переключено в оффлайн-режим. UUID: {profile.Uuid}");
+                            Log(_loc.Get("log_auth_fallback_offline", profile.Uuid));
                         }
                         else
                         {
-                            throw new OperationCanceledException("Запуск отменен пользователем.");
+                            throw new OperationCanceledException(_loc["msg_launch_cancelled"]);
                         }
                     }
                 }
 
                 // 3. Проверка и подготовка Java 21
                 SetStatus(_loc["status_downloading_java"], Color.FromRgb(255, 154, 0));
-                Log("[JVM] Проверка доступности Java 21...");
+                Log(_loc["log_jvm_checking"]);
 
                 var javaProgress = new Progress<double>(p =>
                 {
@@ -544,11 +542,11 @@ namespace LauncherC
 
                 // 4. Синхронизация модпака через packwiz
                 SetStatus(_loc["status_syncing"], Color.FromRgb(255, 154, 0));
-                Log("[PACKWIZ] Синхронизация сборки модов...");
+                Log(_loc["log_packwiz_syncing"]);
 
                 if (_settings.ForceUpdate)
                 {
-                    Log("[PACKWIZ] Обнаружен флаг принудительного обновления. Очистка папки mods...");
+                    Log(_loc["log_packwiz_force_clean"]);
                     PackwizManager.ClearModsDirectory(mcDir);
                     _settings.ForceUpdate = false;
                     SettingsManager.SaveSettings(_settings);
@@ -565,18 +563,18 @@ namespace LauncherC
                 );
 
                 // 6. Запуск игрового клиента
-                Log($"[GAME] Передача управления Minecraft ({versionId})...");
+                Log(_loc.Get("log_game_transfer", versionId));
                 DiscordRpcManager.Instance.UpdateStatus("В игре на OBSHAGA", $"Ник: {nickname}");
 
                 int ram = _settings.RamMb > 0 ? _settings.RamMb : 4096;
-                Log($"[GAME] Выделение памяти: {ram} МБ");
+                Log(_loc.Get("log_game_ram", ram));
 
                 _isGameRunning = true;
                 SetStatus(_loc["status_playing"], Color.FromRgb(0, 162, 255));
 
                 Dispatcher.Invoke(() =>
                 {
-                    BtnPlay.Content = "В ИГРЕ";
+                    BtnPlay.Content = _loc["btn_in_game"];
                     BtnPlay.IsEnabled = false;
                     LaunchProgressBar.Visibility = Visibility.Collapsed;
                 });
@@ -598,22 +596,22 @@ namespace LauncherC
                             BtnPlay.Content = _loc["play"];
                             SetStatus(_loc["status_ready"], Color.FromRgb(34, 197, 94));
                         });
-                        DiscordRpcManager.Instance.UpdateStatus("В лаунчере", "Aperture Science Development Center");
+                        DiscordRpcManager.Instance.UpdateStatus(_loc["status_in_launcher"], "Aperture Science Development Center");
                     }
                 );
 
-                Log("[SYS] Протокол запуска успешно завершен. Игра выполняется.");
+                Log(_loc["log_sys_launch_success"]);
             }
             catch (OperationCanceledException)
             {
-                Log("[SYS] Запуск отменен.");
+                Log(_loc["log_sys_launch_cancelled"]);
             }
             catch (Exception ex)
             {
-                Log($"[ERROR] Ошибка запуска: {ex.Message}");
+                Log(_loc.Get("log_error_launch", ex.Message));
                 Dispatcher.Invoke(() =>
                 {
-                    MessageBox.Show(this, $"Ошибка запуска Minecraft:\n{ex.Message}", "Ошибка запуска", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show(this, $"{_loc["error_launch_prefix"]}\n{ex.Message}", _loc["error_launch_title"], MessageBoxButton.OK, MessageBoxImage.Error);
                 });
             }
             finally
