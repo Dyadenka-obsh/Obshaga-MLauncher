@@ -305,7 +305,7 @@
         <!-- Footer -->
         <DockPanel Grid.Row="2" Margin="0,10,0,0">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="v2.0.0 C# Edition" Foreground="{DynamicResource BrushTextSecondary}" FontSize="11"/>
+                <TextBlock Text="v2.0.1 C# Edition" Foreground="{DynamicResource BrushTextSecondary}" FontSize="11"/>
             </StackPanel>
             
             <Button x:Name="BtnSaveClose" DockPanel.Dock="Right" Content="Сохранить и закрыть" 

@@ -37,7 +37,7 @@ namespace LauncherC.Core
 
         static AuthService()
         {
-            HttpClient.DefaultRequestHeaders.UserAgent.ParseAdd("ApertureLauncher/2.0.0");
+            HttpClient.DefaultRequestHeaders.UserAgent.ParseAdd($"ApertureLauncher/{Config.CurrentVersion}");
         }
 
         /// <summary>

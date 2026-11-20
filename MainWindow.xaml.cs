@@ -57,7 +57,7 @@ namespace LauncherC
             // 5. Инициализация Discord RPC в неблокирующем фоновом потоке
             Task.Run(() => DiscordRpcManager.Instance.Initialize());
 
-            // 6. Фоновая проверка обновлений с GitHub (версия 2.0.0)
+            // 6. Фоновая проверка обновлений с GitHub (версия 2.0.1)
             Task.Run(CheckForUpdatesAsync);
 
             // 7. Загрузка новостей и чейнджлогов
@@ -407,7 +407,7 @@ namespace LauncherC
 
         #endregion
 
-        #region Проверка обновлений (2.0.0)
+        #region Проверка обновлений (2.0.1)
 
         private async Task CheckForUpdatesAsync()
         {

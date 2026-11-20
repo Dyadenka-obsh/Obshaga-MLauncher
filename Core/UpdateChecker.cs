@@ -18,7 +18,7 @@ namespace LauncherC.Core
 
         static UpdateChecker()
         {
-            HttpClient.DefaultRequestHeaders.UserAgent.ParseAdd("ApertureLauncher/2.0.0");
+            HttpClient.DefaultRequestHeaders.UserAgent.ParseAdd($"ApertureLauncher/{Config.CurrentVersion}");
             HttpClient.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github.v3+json");
         }
 
