@@ -9,7 +9,7 @@
     <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
     <RootNamespace>LauncherC</RootNamespace>
     <AssemblyName>LauncherC</AssemblyName>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
     <Description>Aperture Science Minecraft Launcher (C# .NET 10 Fork for Project OBSHAGA)</Description>
   </PropertyGroup>
 

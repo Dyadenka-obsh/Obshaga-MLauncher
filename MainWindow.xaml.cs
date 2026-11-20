@@ -64,7 +64,7 @@ namespace LauncherC
             Task.Run(LoadChangelogsAsync);
 
             Log(_loc["log_sys_init"]);
-            Log(_loc.Get("log_sys_version", Config.CurrentVersion, "2.0.0", ".NET 10 WPF"));
+            Log(_loc.Get("log_sys_version", Config.CurrentVersion, "2.0.1", ".NET 10 WPF"));
             Log(_loc.Get("log_sys_theme", currentTheme == AppTheme.Retro ? _loc["theme_opt_retro"] : _loc["theme_opt_modern"]));
             Log(_loc.Get("log_sys_game_dir", SettingsManager.GetActiveMinecraftPath(_settings)));
         }

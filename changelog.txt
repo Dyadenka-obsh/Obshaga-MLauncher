@@ -1,3 +1,11 @@
+VERSION 2.0.1 - QUALITY & COMPATIBILITY HOTFIX
+1. Fixed NeoForge clean install failure: automatically generate initial launcher_profiles.json to prevent installer aborts.
+2. Fixed Mojang authlib game launch crash caused by MSession parameter order (invalid UUID string: mock_token).
+3. Added full multi-language localization (EN / RU / UK) for all real-time launcher console logs and background tasks.
+4. Added custom JVM launch arguments field in Settings with fool-proof validation (-Xmx and -Xms guard) and "Restore Defaults" button.
+5. Replaced standard white OS scrollbars and sliders with custom theme-tailored styles (Hi-Tech Amber for Modern 2.0, Bronze CRT for Retro 1973).
+6. Added automatic deduplication of libraries in classpath to avoid NeoForge UnionFileSystem duplicate key issues.
+
 VERSION 2.0.0 - REBORN
 1. Complete architectural rewrite of the launcher from Python/Tkinter to C# (.NET 10 WPF).
 2. Introduced dual-theme system with on-the-fly switching:

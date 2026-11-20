@@ -102,9 +102,9 @@ namespace LauncherC.Core
         public const string LauncherChangelogUrl = "https://raw.githubusercontent.com/Dyadenka-obsh/Obshaga-MLauncher/refs/heads/main/changelog.txt";
 
         /// <summary>
-        /// Текущая версия форка LauncherC (2.0.0)
+        /// Текущая версия форка LauncherC (2.0.1)
         /// </summary>
-        public const string CurrentVersion = "2.0.0";
+        public const string CurrentVersion = "2.0.1";
 
         /// <summary>
         /// Репозиторий GitHub для проверки обновлений
