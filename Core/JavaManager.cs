@@ -77,7 +77,8 @@ namespace LauncherC.Core
         }
 
         /// <summary>
-        /// Скачивает официальный архив OpenJDK 21 от Adoptium и распаковывает в minecraftDir/runtime/java-21.
+        /// Скачивает официальный архив OpenJDK 21 от Adoptium и распаковывает в runtime/java-runtime-delta/windows-x64/java-runtime-delta.
+        /// Полностью восстанавливает стандартную структуру рантайма Mojang/Python.
         /// </summary>
         private static async Task<string> DownloadAndInstallAdoptiumAsync(
             string minecraftDir,
@@ -89,8 +90,9 @@ namespace LauncherC.Core
             string runtimeRoot = Path.Combine(minecraftDir, "runtime");
             Directory.CreateDirectory(runtimeRoot);
 
-            string targetDir = Path.Combine(runtimeRoot, "java-21");
-            string zipPath = Path.Combine(runtimeRoot, "java-21-temp.zip");
+            // Стандартный путь как в Python: runtime/java-runtime-delta/windows-x64/java-runtime-delta
+            string targetDir = Path.Combine(runtimeRoot, Config.JvmRuntimeName, "windows-x64", Config.JvmRuntimeName);
+            string zipPath = Path.Combine(runtimeRoot, "java-temp.zip");
 
             try
             {
@@ -152,6 +154,22 @@ namespace LauncherC.Core
 
                 Directory.Delete(extractTemp, true);
                 if (File.Exists(zipPath)) File.Delete(zipPath);
+
+                // Создаем .version файл для полной совместимости со структурой Mojang
+                try
+                {
+                    string versionFile = Path.Combine(runtimeRoot, Config.JvmRuntimeName, "windows-x64", ".version");
+                    File.WriteAllText(versionFile, "21.0.7\n");
+                }
+                catch { }
+
+                // Удаляем старую нестандартную папку java-21 при ее наличии
+                try
+                {
+                    string legacyJava21 = Path.Combine(runtimeRoot, "java-21");
+                    if (Directory.Exists(legacyJava21)) Directory.Delete(legacyJava21, true);
+                }
+                catch { }
 
                 string? javaExe = FindJavaExeInDir(targetDir);
                 if (string.IsNullOrEmpty(javaExe))

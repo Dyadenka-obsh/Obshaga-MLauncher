@@ -23,6 +23,11 @@ namespace LauncherC.Core
         public const string ModLoader = "neoforge";
 
         /// <summary>
+        /// Версия NeoForge по умолчанию (соответствует pack.toml сборки OBSHAGA).
+        /// </summary>
+        public const string DefaultNeoForgeVersion = "21.1.265";
+
+        /// <summary>
         /// URL манифеста packwiz на GitHub для синхронизации клиентских модов, шейдеров и конфигураций.
         /// </summary>
         public const string PackwizPackTomlUrl = "https://raw.githubusercontent.com/Dyadenka-obsh/Obshaga-MServer/refs/heads/main/pack.toml";
@@ -102,9 +107,9 @@ namespace LauncherC.Core
         public const string LauncherChangelogUrl = "https://raw.githubusercontent.com/Dyadenka-obsh/Obshaga-MLauncher/refs/heads/main/changelog.txt";
 
         /// <summary>
-        /// Текущая версия форка LauncherC (2.0.1)
+        /// Текущая версия форка LauncherC (2.0.2)
         /// </summary>
-        public const string CurrentVersion = "2.0.1";
+        public const string CurrentVersion = "2.0.2";
 
         /// <summary>
         /// Репозиторий GitHub для проверки обновлений

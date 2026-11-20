@@ -89,9 +89,10 @@ namespace LauncherC.Core
             CancellationToken ct = default)
         {
             var loc = LocalizationManager.Instance;
-            await EnsureBootstrapAsync(minecraftDir, log, ct);
+            string cleanDir = Path.GetFullPath(minecraftDir).TrimEnd('\\', '/');
+            await EnsureBootstrapAsync(cleanDir, log, ct);
 
-            string jarPath = Path.Combine(minecraftDir, "packwiz-installer-bootstrap.jar");
+            string jarPath = Path.Combine(cleanDir, "packwiz-installer-bootstrap.jar");
 
             // Использование парного java.exe для консольного вывода если передан javaw.exe
             string execJava = javaPath;
@@ -104,15 +105,18 @@ namespace LauncherC.Core
             var psi = new ProcessStartInfo
             {
                 FileName = execJava,
-                Arguments = $"-jar \"{jarPath}\" -g -s client \"{Config.PackwizPackTomlUrl}\"",
-                WorkingDirectory = minecraftDir,
+                WorkingDirectory = cleanDir,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
-                CreateNoWindow = true,
-                StandardOutputEncoding = System.Text.Encoding.UTF8,
-                StandardErrorEncoding = System.Text.Encoding.UTF8
+                CreateNoWindow = true
             };
+            psi.ArgumentList.Add("-jar");
+            psi.ArgumentList.Add(jarPath);
+            psi.ArgumentList.Add("-g");
+            psi.ArgumentList.Add("-s");
+            psi.ArgumentList.Add("client");
+            psi.ArgumentList.Add(Config.PackwizPackTomlUrl);
 
             log(loc.Get("log_packwiz_run_sync", $"{execJava} -jar {Path.GetFileName(jarPath)} -g -s client"));
 

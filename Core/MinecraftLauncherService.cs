@@ -42,23 +42,24 @@ namespace LauncherC.Core
             CancellationToken ct = default)
         {
             var loc = LocalizationManager.Instance;
-            Directory.CreateDirectory(minecraftDir);
+            string cleanMinecraftDir = Path.GetFullPath(minecraftDir).TrimEnd('\\', '/');
+            Directory.CreateDirectory(cleanMinecraftDir);
 
             // 0. КРИТИЧЕСКИЙ ФИКС ДЛЯ ЧИСТОЙ УСТАНОВКИ:
             // Инсталлятор NeoForge (как и Forge) требует обязательного наличия файла launcher_profiles.json
             // в целевой папке игры, иначе мгновенно падает с ошибкой:
             // "There is no minecraft launcher profile in ..., you need to run the launcher first!"
-            string launcherProfilesPath = Path.Combine(minecraftDir, "launcher_profiles.json");
-            if (!File.Exists(launcherProfilesPath))
+            string launcherProfilesPath = Path.Combine(cleanMinecraftDir, "launcher_profiles.json");
+            if (!File.Exists(launcherProfilesPath) || new FileInfo(launcherProfilesPath).Length < 10)
             {
-                File.WriteAllText(launcherProfilesPath, "{\n  \"profiles\": {},\n  \"settings\": {},\n  \"version\": 3\n}");
+                File.WriteAllText(launcherProfilesPath, "{\n  \"profiles\": {\n    \"neoforge\": {\n      \"name\": \"neoforge\",\n      \"type\": \"custom\",\n      \"lastVersionId\": \"neoforge-" + Config.DefaultNeoForgeVersion + "\"\n    }\n  },\n  \"settings\": {},\n  \"version\": 3\n}");
             }
 
-            var mcPath = new MinecraftPath(minecraftDir);
+            var mcPath = new MinecraftPath(cleanMinecraftDir);
             var launcher = new CMLauncher(mcPath);
 
             // 1. Поиск уже установленной версии NeoForge в папке versions
-            string versionsDir = Path.Combine(minecraftDir, "versions");
+            string versionsDir = Path.Combine(cleanMinecraftDir, "versions");
             if (Directory.Exists(versionsDir))
             {
                 var neoforgeDirs = Directory.GetDirectories(versionsDir)
@@ -71,6 +72,21 @@ namespace LauncherC.Core
                 {
                     string existingVersion = neoforgeDirs.Last()!;
                     log(loc.Get("log_neoforge_found", existingVersion));
+
+                    // Гарантируем целостность библиотек существующей версии
+                    try
+                    {
+                        var neoObj = await launcher.GetVersionAsync(existingVersion);
+                        if (neoObj != null)
+                        {
+                            await launcher.CheckAndDownloadAsync(neoObj);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        log($"[NEOFORGE LIBS] {ex.Message}");
+                    }
+
                     return existingVersion;
                 }
             }
@@ -91,73 +107,120 @@ namespace LauncherC.Core
                 log($"[GAME] CmlLib: {ex.Message}");
             }
 
-            // 3. Установка NeoForge через официальный headless installer
+            // 3. Определение версии NeoForge: из pack.toml сборки либо актуальной стабильной
+            string neoVersion = Config.DefaultNeoForgeVersion;
+            try
+            {
+                string packTomlPath = Path.Combine(cleanMinecraftDir, "pack.toml");
+                if (File.Exists(packTomlPath))
+                {
+                    string tomlText = await File.ReadAllTextAsync(packTomlPath, ct);
+                    var match = Regex.Match(tomlText, @"neoforge\s*=\s*[""']([^""']+)[""']", RegexOptions.IgnoreCase);
+                    if (match.Success)
+                    {
+                        neoVersion = match.Groups[1].Value.Trim();
+                    }
+                }
+                else
+                {
+                    neoVersion = await GetLatestNeoForgeVersionAsync(Config.MinecraftVersion);
+                }
+            }
+            catch
+            {
+                neoVersion = Config.DefaultNeoForgeVersion;
+            }
+
             log(loc.Get("log_loader_installing", Config.ModLoader, Config.MinecraftVersion));
-            string neoVersion = await GetLatestNeoForgeVersionAsync(Config.MinecraftVersion);
             log(loc.Get("log_neoforge_target", neoVersion));
 
             string installerUrl = $"https://maven.neoforged.net/releases/net/neoforged/neoforge/{neoVersion}/neoforge-{neoVersion}-installer.jar";
-            string installerJar = Path.Combine(minecraftDir, $"neoforge-{neoVersion}-installer.jar");
 
-            log(loc.Get("log_neoforge_download", installerUrl));
-            using (var resp = await HttpClient.GetAsync(installerUrl, HttpCompletionOption.ResponseHeadersRead, ct))
+            // Выполняем установку во временной изолированной папке, как в оригинале на Python
+            string tempDir = Path.Combine(Path.GetTempPath(), "neoforge_installer_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempDir);
+            string installerJar = Path.Combine(tempDir, $"neoforge-{neoVersion}-installer.jar");
+
+            try
             {
-                resp.EnsureSuccessStatusCode();
-                using var inStream = await resp.Content.ReadAsStreamAsync(ct);
-                using var outStream = new FileStream(installerJar, FileMode.Create, FileAccess.Write, FileShare.None, 81920, true);
-                await inStream.CopyToAsync(outStream, ct);
+                log(loc.Get("log_neoforge_download", installerUrl));
+                using (var resp = await HttpClient.GetAsync(installerUrl, HttpCompletionOption.ResponseHeadersRead, ct))
+                {
+                    resp.EnsureSuccessStatusCode();
+                    using var inStream = await resp.Content.ReadAsStreamAsync(ct);
+                    using var outStream = new FileStream(installerJar, FileMode.Create, FileAccess.Write, FileShare.None, 81920, true);
+                    await inStream.CopyToAsync(outStream, ct);
+                }
+
+                log(loc["log_neoforge_installing"]);
+
+                string execJava = javaPath;
+                if (execJava.EndsWith("javaw.exe", StringComparison.OrdinalIgnoreCase))
+                {
+                    string partner = execJava.Substring(0, execJava.Length - 9) + "java.exe";
+                    if (File.Exists(partner)) execJava = partner;
+                }
+
+                // Гарантируем launcher_profiles.json непосредственно перед вызовом инсталлятора
+                if (!File.Exists(launcherProfilesPath) || new FileInfo(launcherProfilesPath).Length < 10)
+                {
+                    File.WriteAllText(launcherProfilesPath, "{\n  \"profiles\": {\n    \"neoforge\": {\n      \"name\": \"neoforge\",\n      \"type\": \"custom\",\n      \"lastVersionId\": \"neoforge-" + neoVersion + "\"\n    }\n  },\n  \"settings\": {},\n  \"version\": 3\n}");
+                }
+
+                var psi = new ProcessStartInfo
+                {
+                    FileName = execJava,
+                    WorkingDirectory = tempDir,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                psi.ArgumentList.Add("-jar");
+                psi.ArgumentList.Add(installerJar);
+                psi.ArgumentList.Add("--install-client");
+                psi.ArgumentList.Add(cleanMinecraftDir);
+
+                var logLines = new List<string>();
+                using var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
+                proc.OutputDataReceived += (_, e) =>
+                {
+                    if (!string.IsNullOrWhiteSpace(e.Data))
+                    {
+                        logLines.Add(e.Data.TrimEnd());
+                        log($"[NEOFORGE] {e.Data.TrimEnd()}");
+                    }
+                };
+                proc.ErrorDataReceived += (_, e) =>
+                {
+                    if (!string.IsNullOrWhiteSpace(e.Data))
+                    {
+                        logLines.Add(e.Data.TrimEnd());
+                        log($"[NEOFORGE] {e.Data.TrimEnd()}");
+                    }
+                };
+
+                proc.Start();
+                proc.BeginOutputReadLine();
+                proc.BeginErrorReadLine();
+                await proc.WaitForExitAsync(ct);
+
+                if (proc.ExitCode != 0)
+                {
+                    string errDetails = string.Join("\n", logLines.TakeLast(5));
+                    log($"[NEOFORGE ERROR] Exit code {proc.ExitCode}: {errDetails}");
+                    throw new InvalidOperationException(loc.Get("err_neoforge_installer_exit", proc.ExitCode, errDetails));
+                }
             }
-
-            log(loc["log_neoforge_installing"]);
-
-            string execJava = javaPath;
-            if (execJava.EndsWith("javaw.exe", StringComparison.OrdinalIgnoreCase))
+            finally
             {
-                string partner = execJava.Substring(0, execJava.Length - 9) + "java.exe";
-                if (File.Exists(partner)) execJava = partner;
+                // Очистка временной директории
+                try
+                {
+                    if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
+                }
+                catch { }
             }
-
-            // Повторно гарантируем наличие profiles перед запуском процесса инсталлятора
-            if (!File.Exists(launcherProfilesPath))
-            {
-                File.WriteAllText(launcherProfilesPath, "{\n  \"profiles\": {},\n  \"settings\": {},\n  \"version\": 3\n}");
-            }
-
-            var psi = new ProcessStartInfo
-            {
-                FileName = execJava,
-                Arguments = $"-jar \"{installerJar}\" --installClient \"{minecraftDir}\"",
-                WorkingDirectory = minecraftDir,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                StandardOutputEncoding = System.Text.Encoding.UTF8,
-                StandardErrorEncoding = System.Text.Encoding.UTF8
-            };
-
-            using var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
-            proc.OutputDataReceived += (_, e) =>
-            {
-                if (!string.IsNullOrWhiteSpace(e.Data)) log($"[NEOFORGE] {e.Data.TrimEnd()}");
-            };
-            proc.ErrorDataReceived += (_, e) =>
-            {
-                if (!string.IsNullOrWhiteSpace(e.Data)) log($"[NEOFORGE] {e.Data.TrimEnd()}");
-            };
-
-            proc.Start();
-            proc.BeginOutputReadLine();
-            proc.BeginErrorReadLine();
-            await proc.WaitForExitAsync(ct);
-
-            if (proc.ExitCode != 0)
-            {
-                log($"[NEOFORGE] Installer finished with exit code {proc.ExitCode}");
-            }
-
-            // Удаляем временный файл инсталлятора
-            try { File.Delete(installerJar); } catch { }
 
             // Повторно проверяем установленную версию
             if (Directory.Exists(versionsDir))
@@ -172,6 +235,22 @@ namespace LauncherC.Core
                 {
                     string installedId = neoforgeDirs.Last()!;
                     log(loc.Get("log_neoforge_success", installedId));
+
+                    // Загружаем недостающие библиотеки для установленной версии NeoForge
+                    try
+                    {
+                        log(loc.Get("log_neoforge_downloading_libs", installedId));
+                        var neoObj = await launcher.GetVersionAsync(installedId);
+                        if (neoObj != null)
+                        {
+                            await launcher.CheckAndDownloadAsync(neoObj);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        log($"[NEOFORGE LIBS] {ex.Message}");
+                    }
+
                     return installedId;
                 }
             }
@@ -318,7 +397,8 @@ namespace LauncherC.Core
                 jvmArgs.Add($"-Delyby.skinUrl={profile.SkinUrl}");
             }
 
-            var mcPath = new MinecraftPath(minecraftDir);
+            string cleanMinecraftDir = Path.GetFullPath(minecraftDir).TrimEnd('\\', '/');
+            var mcPath = new MinecraftPath(cleanMinecraftDir);
             var launcher = new CMLauncher(mcPath);
 
             // В CmlLib.Core конструктор MSession имеет порядок параметров:
@@ -365,7 +445,7 @@ namespace LauncherC.Core
                 log(loc["log_mc_verified"]);
             }
 
-            process.StartInfo.WorkingDirectory = minecraftDir;
+            process.StartInfo.WorkingDirectory = cleanMinecraftDir;
             process.StartInfo.RedirectStandardOutput = true;
             process.StartInfo.RedirectStandardError = true;
             process.StartInfo.UseShellExecute = false;

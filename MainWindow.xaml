@@ -144,7 +144,7 @@
                             </Border>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                            <TextBlock Text="Minecraft 1.21.1 NeoForge • C# v2.0.1 • " FontSize="11" Foreground="{DynamicResource BrushTextSecondary}"/>
+                            <TextBlock Text="Minecraft 1.21.1 NeoForge • C# v2.0.2 • " FontSize="11" Foreground="{DynamicResource BrushTextSecondary}"/>
                             <TextBlock x:Name="TxtThemeBadge" Text="MODERN 2.0" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource BrushTextAccent}"/>
                         </StackPanel>
                     </StackPanel>
