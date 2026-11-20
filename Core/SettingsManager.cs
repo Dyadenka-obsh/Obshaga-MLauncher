@@ -147,6 +147,14 @@ namespace LauncherC.Core
             {
                 string json = File.ReadAllText(path);
                 var settings = JsonSerializer.Deserialize<LauncherSettings>(json, JsonOptions) ?? new LauncherSettings();
+
+                // Автоматическая миграция дефолтных аргументов JVM для совместимости с CustomSkinLoader
+                if (string.Equals(settings.JvmArguments?.Trim(), "-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200", StringComparison.OrdinalIgnoreCase))
+                {
+                    settings.JvmArguments = Config.DefaultJvmArguments;
+                    SaveSettings(settings);
+                }
+
                 return settings;
             }
             catch (Exception ex)

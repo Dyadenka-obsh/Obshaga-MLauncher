@@ -6,6 +6,7 @@ VERSION 2.0.2 - CLEAN INSTALL & STRUCTURE RESTORATION
    - Guaranteed automatic resolution and verification of all NeoForge client libraries via CmlLib manifest loader post-installation.
    - Added robust trailing path normalization for custom and default Minecraft directories.
 3. Added diagnostic exit logging and localization for installer failure events.
+4. Fixed CustomSkinLoader crash on Minecraft 1.21.1 / NeoForge: automatically inject '-Dcustomskinloader.ignorePatchFailure=true' JVM flag to prevent Transformation rule IllegalStateException on SkinManager.
 
 VERSION 2.0.1 - QUALITY & COMPATIBILITY HOTFIX
 1. Fixed NeoForge clean install failure: automatically generate initial launcher_profiles.json to prevent installer aborts.

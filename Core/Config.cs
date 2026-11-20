@@ -72,10 +72,10 @@ namespace LauncherC.Core
         public const string AdoptiumJava21Url = "https://api.adoptium.net/v3/binary/latest/21/ga/windows/x64/jdk/hotspot/normal/eclipse";
 
         /// <summary>
-        /// Аргументы JVM по умолчанию (G1GC сборщик мусора, оптимизация пауз).
+        /// Аргументы JVM по умолчанию (G1GC сборщик мусора, оптимизация пауз, совместимость с CustomSkinLoader).
         /// Настройки памяти (-Xmx и -Xms) задаются пользователем исключительно через ползунок ОЗУ!
         /// </summary>
-        public const string DefaultJvmArguments = "-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200";
+        public const string DefaultJvmArguments = "-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -Dcustomskinloader.ignorePatchFailure=true";
 
         #endregion
 

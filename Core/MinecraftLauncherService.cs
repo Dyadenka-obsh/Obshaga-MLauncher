@@ -397,6 +397,13 @@ namespace LauncherC.Core
                 jvmArgs.Add($"-Delyby.skinUrl={profile.SkinUrl}");
             }
 
+            // 4. Обязательный флаг совместимости CustomSkinLoader (в Minecraft 1.21.1 / NeoForge
+            // правило skin-manager-patch выбрасывает IllegalStateException без этого флага)
+            if (!jvmArgs.Any(a => a.StartsWith("-Dcustomskinloader.ignorePatchFailure=", StringComparison.OrdinalIgnoreCase)))
+            {
+                jvmArgs.Add("-Dcustomskinloader.ignorePatchFailure=true");
+            }
+
             string cleanMinecraftDir = Path.GetFullPath(minecraftDir).TrimEnd('\\', '/');
             var mcPath = new MinecraftPath(cleanMinecraftDir);
             var launcher = new CMLauncher(mcPath);
